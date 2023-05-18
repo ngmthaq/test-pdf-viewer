@@ -6,6 +6,7 @@ const PDF_WORKER = "/public/libs/pdfjs/build/pdf.worker.js";
 const PDF_PATH = "/public/static/pdf.pdf";
 
 // Template string
+const ZOOM_OPTION_PSUEDO = "zoom-option-psuedo";
 const CANVAS_ID_TEMPLATE = "pdf-viewer-:id";
 const CONTAINER_ID_TEMPLATE = "pdf-container-:id";
 const CANVAS_CLASS = "canvas-layer";
@@ -48,12 +49,19 @@ let initialState = {
   currentPage: 0,
   pageCount: 0,
   zoom: CSS_UNIT,
+  scaleControl: 1,
+  scaleStep: 0.25,
+  minScale: 0.25,
+  maxScale: 5,
   viewMode: VIEW_MODES.vertical.value,
   viewport: { width: 0, height: 0 },
   actualViewport: { width: 0, height: 0 },
+  isFullscreen: false,
 };
 
 let pages = [];
+
+console.log(PDFJS);
 
 $(document).ready(function () {
   // Navigation elements
@@ -67,6 +75,7 @@ $(document).ready(function () {
   const zoomInButton = $(document).find("#zoom-in");
   const zoomDropdown = $(document).find("#zoom-select-options");
   const pdfContainer = $(document).find("#pdf-container");
+  const openFullScreenBtn = $(document).find("#open-fullscreen-btn");
 
   pdfContainer.addClass(initialState.viewMode);
   currentPageInput.numeric();
@@ -131,6 +140,9 @@ $(document).ready(function () {
   // Dropdown changed
   zoomDropdown.change(function () {
     initialState.zoom = convertZoomNumber($(this).val());
+    zoomInButton.removeClass("disabled");
+    zoomOutButton.removeClass("disabled");
+    initialState.scaleControl = 1;
     pages.forEach(({ page, canvas }) => {
       const elements = canvas[0];
       const ctx = elements.getContext("2d");
@@ -145,6 +157,85 @@ $(document).ready(function () {
       }
       page.render(renderCtx);
     });
+  });
+
+  // Click zoom out
+  zoomOutButton.click(function () {
+    if (initialState.scaleControl > initialState.minScale) {
+      zoomInButton.removeClass("disabled");
+      initialState.scaleControl -= initialState.scaleStep;
+      initialState.zoom = initialState.scaleControl;
+      $("#" + ZOOM_OPTION_PSUEDO).val(initialState.scaleControl);
+      $("#" + ZOOM_OPTION_PSUEDO).text(initialState.scaleControl * 100 + "%");
+      zoomDropdown.val(initialState.scaleControl);
+      initialState.scaleControl === initialState.minScale &&
+        $(this).addClass("disabled");
+      pages.forEach(({ page, canvas }) => {
+        const elements = canvas[0];
+        const ctx = elements.getContext("2d");
+        const viewport = page.getViewport({ scale: initialState.zoom });
+        const renderCtx = { canvasContext: ctx, viewport: viewport };
+        elements.height = viewport.height;
+        elements.width = viewport.width;
+        if (ENABLED_MAX_WIDTH.includes($(this).val())) {
+          canvas.css("max-width", "100vw");
+        } else {
+          canvas.css("max-width", "unset");
+        }
+        page.render(renderCtx);
+      });
+    }
+  });
+
+  // Click zoom in
+  zoomInButton.click(function () {
+    if (initialState.scaleControl < initialState.maxScale) {
+      zoomOutButton.removeClass("disabled");
+      initialState.scaleControl += initialState.scaleStep;
+      initialState.zoom = initialState.scaleControl;
+      $("#" + ZOOM_OPTION_PSUEDO).val(initialState.scaleControl);
+      $("#" + ZOOM_OPTION_PSUEDO).text(initialState.scaleControl * 100 + "%");
+      zoomDropdown.val(initialState.scaleControl);
+      initialState.scaleControl === initialState.maxScale &&
+        $(this).addClass("disabled");
+      pages.forEach(({ page, canvas }) => {
+        const elements = canvas[0];
+        const ctx = elements.getContext("2d");
+        const viewport = page.getViewport({ scale: initialState.zoom });
+        const renderCtx = { canvasContext: ctx, viewport: viewport };
+        elements.height = viewport.height;
+        elements.width = viewport.width;
+        if (ENABLED_MAX_WIDTH.includes($(this).val())) {
+          canvas.css("max-width", "100vw");
+        } else {
+          canvas.css("max-width", "unset");
+        }
+        page.render(renderCtx);
+      });
+    }
+  });
+
+  // Open fullscreen
+  openFullScreenBtn.click(function () {
+    const elem = pdfContainer[0];
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) {
+      elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) {
+      elem.msRequestFullscreen();
+    }
+  });
+
+  // Container fullscreen event
+  pdfContainer.on("fullscreenchange", function (e) {
+    if (initialState.isFullscreen) {
+      initialState.isFullscreen = false;
+      pdfContainer.removeClass("fullscreen");
+    } else {
+      initialState.isFullscreen = true;
+      pdfContainer.addClass("fullscreen");
+    }
   });
 
   // Initial pdf.js
@@ -165,13 +256,17 @@ $(document).ready(function () {
 
   // Render pages
   function initPages() {
+    const lastOption = `<option style="display: none;" value="" id="${ZOOM_OPTION_PSUEDO}"></option>`;
     Object.values(ZOOM_LEVELS).forEach((level) => {
       const option = `<option value="${level.value}">${level.title}</option>`;
       zoomDropdown.html(zoomDropdown.html() + option);
     });
+    zoomDropdown.html(zoomDropdown.html() + lastOption);
 
     for (let i = initialState.currentPage; i <= initialState.pageCount; i++) {
       initialState.pdfDoc.getPage(i).then((page) => {
+        const div = $("<div></div>");
+        const wrapper = div[0];
         const canvas = $("<canvas></canvas>");
         const elements = canvas[0];
         const ctx = elements.getContext("2d");
@@ -187,9 +282,20 @@ $(document).ready(function () {
         elements.style.marginTop = CANVAS_MARGIN + "px";
         elements.style.marginBottom = CANVAS_MARGIN + "px";
         elements.id = CANVAS_ID_TEMPLATE.replace(":id", i);
+        wrapper.style.width = "100%";
+        wrapper.append(elements);
+        wrapper.addEventListener("mouseover", function () {
+          initialState.currentPage = i;
+          currentPageInput.val(initialState.currentPage);
+          prevButton.removeClass("disabled");
+          nextButton.removeClass("disabled");
+          initialState.currentPage === 1 && prevButton.addClass("disabled");
+          initialState.currentPage === initialState.pageCount &&
+            nextButton.addClass("disabled");
+        });
         pages.push({ canvas, page });
         page.render(renderCtx);
-        pdfContainer.append(elements);
+        pdfContainer.append(wrapper);
       });
     }
   }
@@ -204,15 +310,18 @@ $(document).ready(function () {
 
       case ZOOM_LEVELS.width.value:
         return (
-          window.innerWidth /
+          pdfContainer.width() /
           (initialState.actualViewport.width + CANVAS_MARGIN * 2)
         );
 
       case ZOOM_LEVELS.fit.value:
-        return (
-          (initialState.viewport.height - CANVAS_MARGIN * 2) /
-          window.innerHeight
-        );
+        const h =
+          pdfContainer.height() /
+          (initialState.actualViewport.height + CANVAS_MARGIN * 2);
+        const w =
+          pdfContainer.width() /
+          (initialState.actualViewport.width + CANVAS_MARGIN * 2);
+        return Math.min(h, w);
 
       default:
         return Number.isNaN(parseFloat(level)) ? CSS_UNIT : parseFloat(level);

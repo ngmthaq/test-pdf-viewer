@@ -44,7 +44,15 @@
                 </div>
                 <select id="zoom-select-options" class="d-none d-lg-block"></select>
             </div>
-            <div class="right-controller"></div>
+            <div class="right-controller">
+                <div id="open-fullscreen-btn" class="hover-btn d-none d-lg-flex">
+                    <i class="bi bi-arrows-fullscreen"></i>
+                </div>
+                <div id="dropdown-separator"></div>
+                <div id="dropdown-btn" class="focus-btn">
+                    <i class="bi bi-chevron-double-down"></i>
+                </div>
+            </div>
         </header>
         <section id="pdf-container"></section>
     </main>
