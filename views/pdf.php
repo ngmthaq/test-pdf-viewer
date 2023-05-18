@@ -48,6 +48,9 @@
                 <div id="open-fullscreen-btn" class="hover-btn d-none d-lg-flex">
                     <i class="bi bi-arrows-fullscreen"></i>
                 </div>
+                <div id="print-btn" class="hover-btn d-none d-lg-flex">
+                    <i class="bi bi-printer"></i>
+                </div>
                 <div id="dropdown-separator"></div>
                 <div id="dropdown-btn" class="focus-btn">
                     <i class="bi bi-chevron-double-down"></i>
@@ -59,6 +62,7 @@
 
     <script src="<?php assets('libs/jquery/index.min.js') ?>"></script>
     <script src="<?php assets('libs/jquery/numeric.plugin.min.js') ?>"></script>
+    <script src="<?php assets('libs/jquery/print.plugin.js') ?>"></script>
     <script src="<?php assets('libs/bootstrap/js/bootstrap.min.js') ?>"></script>
     <script src="<?php assets('libs/pdfjs/build/pdf.js') ?>"></script>
     <script src="<?php assets('js/pdf.js') ?>"></script>

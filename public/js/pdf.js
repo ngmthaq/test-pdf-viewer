@@ -3,7 +3,7 @@ const PDFJS = window["pdfjs-dist/build/pdf"];
 
 // Static paths
 const PDF_WORKER = "/public/libs/pdfjs/build/pdf.worker.js";
-const PDF_PATH = "/public/static/pdf.pdf";
+const PDF_PATH = "/public/static/pdf2.pdf";
 
 // Template string
 const ZOOM_OPTION_PSUEDO = "zoom-option-psuedo";
@@ -76,6 +76,7 @@ $(document).ready(function () {
   const zoomDropdown = $(document).find("#zoom-select-options");
   const pdfContainer = $(document).find("#pdf-container");
   const openFullScreenBtn = $(document).find("#open-fullscreen-btn");
+  const printBtn = $(document).find("#print-btn");
 
   pdfContainer.addClass(initialState.viewMode);
   currentPageInput.numeric();
@@ -236,6 +237,11 @@ $(document).ready(function () {
       initialState.isFullscreen = true;
       pdfContainer.addClass("fullscreen");
     }
+  });
+
+  // Click print
+  printBtn.click(function () {
+    pdfContainer.printThis();
   });
 
   // Initial pdf.js
