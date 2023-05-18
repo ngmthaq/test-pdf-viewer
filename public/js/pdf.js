@@ -1,12 +1,21 @@
+// PDF.js library
+const PDFJS = window["pdfjs-dist/build/pdf"];
+
+// Static paths
 const PDF_WORKER = "/public/libs/pdfjs/build/pdf.worker.js";
 const PDF_PATH = "/public/static/pdf.pdf";
-const pdfjsLib = window["pdfjs-dist/build/pdf"];
-const CANVAS_ID_TEMPLATE = "pdf-viewer-:id";
-const TEXT_LAYER_ID_TEMPLATE = "text-layer-:id";
-const CANVAS_CLASS = "canvas-layer";
-const TEXT_LAYER_CLASS = "text-layer-layer";
 
-const zoomLevels = {
+// Template string
+const CANVAS_ID_TEMPLATE = "pdf-viewer-:id";
+const CONTAINER_ID_TEMPLATE = "pdf-container-:id";
+const CANVAS_CLASS = "canvas-layer";
+const CANVAS_MARGIN = 8;
+
+// CSS Unit
+const CSS_UNIT = PDFJS.PixelsPerInch.PDF_TO_CSS_UNITS;
+
+// Zoom levels
+const ZOOM_LEVELS = {
   auto: { title: "Automatic Zoom", value: "auto" },
   actual: { title: "Actual Size", value: "actual" },
   fit: { title: "Page Fit", value: "fit" },
@@ -21,211 +30,192 @@ const zoomLevels = {
   p400: { title: "400%", value: 4 },
 };
 
-$(async function () {
-  const [iso, lng] = window.navigator.languages;
-  const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(pdfjsLib.version);
+const ENABLED_MAX_WIDTH = [
+  ZOOM_LEVELS.auto.value,
+  ZOOM_LEVELS.fit.value,
+  ZOOM_LEVELS.width.value,
+];
 
-  $("html").attr("lang", lng);
-  $("html").attr("data-lang", iso);
+// View modes
+const VIEW_MODES = {
+  vertical: { title: "Vertical Scrolling", value: "vertical" },
+  horizontal: { title: "Horizontal Scrolling", value: "horizontal" },
+  wrapped: { title: "Wrapped Scrolling", value: "wrapped" },
+};
 
-  if (match && (match[1] | 0) >= 3 && (match[2] | 0) >= 2) {
-    // Get DOM elements
-    const prevBtn = $("#prev-btn");
-    const nextBtn = $("#next-btn");
-    const currentPageEl = $("#current-page");
-    const totalPagesEl = $("#total-pages");
-    const pdfContainer = $("#pdf-container");
-    const zoomSelect = $("#zoom-select-options");
+let initialState = {
+  pdfDoc: null,
+  currentPage: 0,
+  pageCount: 0,
+  zoom: CSS_UNIT,
+  viewMode: VIEW_MODES.vertical.value,
+  viewport: { width: 0, height: 0 },
+  actualViewport: { width: 0, height: 0 },
+};
 
-    // Init PDF.js worker
-    pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER;
+let pages = [];
 
-    // Create pdf document
-    let doc = await pdfjsLib.getDocument(PDF_PATH).promise;
-    let scale = pdfjsLib.PixelsPerInch.PDF_TO_CSS_UNITS;
-    let firstPage = 1;
-    let lastPage = doc._pdfInfo.numPages;
-    let currentPage = firstPage;
-    let zoomLevel = zoomLevels.auto.value;
-    let canvasWidth = 0;
-    let canvasHeight = 0;
+$(document).ready(function () {
+  // Navigation elements
+  const sidebarButton = $(document).find("#sidebar-controller");
+  const searchButton = $(document).find("#search-controller");
+  const prevButton = $(document).find("#prev-btn");
+  const nextButton = $(document).find("#next-btn");
+  const currentPageInput = $(document).find("#current-page");
+  const totalPagesElement = $(document).find("#total-pages");
+  const zoomOutButton = $(document).find("#zoom-out");
+  const zoomInButton = $(document).find("#zoom-in");
+  const zoomDropdown = $(document).find("#zoom-select-options");
+  const pdfContainer = $(document).find("#pdf-container");
 
-    // Render zoom levels
-    Object.values(zoomLevels).forEach((level) => {
-      const option = `<option value="${level.value}">${level.title}</option>`;
-      zoomSelect.html(zoomSelect.html() + option);
-    });
+  pdfContainer.addClass(initialState.viewMode);
+  currentPageInput.numeric();
+  prevButton.addClass("disabled");
 
-    // Render all pages
-    await init();
+  // Init pdf.js Worker
+  PDFJS.GlobalWorkerOptions.workerSrc = PDF_WORKER;
 
-    // Handle window resize
-    $(window).on("resize", async function () {});
+  // Click prev button
+  prevButton.click(function () {
+    if (initialState.currentPage > 1) {
+      initialState.currentPage -= 1;
+      let id = CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage);
+      currentPageInput.val(initialState.currentPage);
+      let el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      nextButton.removeClass("disabled");
+      initialState.currentPage === 1 && $(this).addClass("disabled");
+    }
+  });
 
-    // Handle click prev page button
-    prevBtn.click(async function (e) {
-      e.preventDefault();
-      if (currentPage > firstPage) {
-        currentPage = currentPage - 1;
-        await changePage();
-      }
-    });
+  // Click next button
+  nextButton.click(function () {
+    if (initialState.currentPage < initialState.pageCount) {
+      initialState.currentPage += 1;
+      let id = CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage);
+      currentPageInput.val(initialState.currentPage);
+      let el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      prevButton.removeClass("disabled");
+      initialState.currentPage === initialState.pageCount &&
+        $(this).addClass("disabled");
+    }
+  });
 
-    // Handle click next page button
-    nextBtn.click(async function (e) {
-      e.preventDefault();
-      if (currentPage < lastPage) {
-        currentPage = currentPage + 1;
-        await changePage();
-      }
-    });
+  // Focus page input
+  currentPageInput.focus(function () {
+    $(this).select();
+  });
 
-    // Accept number only
-    currentPageEl.numeric();
-
-    // Handle change page input
-    currentPageEl.change(async function (e) {
-      e.preventDefault();
-      let val = $(this).val();
+  // Change page input
+  currentPageInput.change(function (e) {
+    let val = parseInt(e.target.value);
+    if (!Number.isNaN(val)) {
       if (val <= 0) val = 1;
-      if (val > lastPage) val = lastPage;
-      currentPage = val;
-      await changePage();
+      if (val > initialState.pageCount) val = initialState.pageCount;
+      initialState.currentPage = val;
+      prevButton.removeClass("disabled");
+      nextButton.removeClass("disabled");
+      initialState.currentPage === 1 && prevButton.addClass("disabled");
+      initialState.currentPage === initialState.pageCount &&
+        nextButton.addClass("disabled");
+      let id = CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage);
+      let el = document.getElementById(id);
+      $(this).val(val);
+      setTimeout(() => {
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 1);
+    }
+  });
+
+  // Dropdown changed
+  zoomDropdown.change(function () {
+    initialState.zoom = convertZoomNumber($(this).val());
+    pages.forEach(({ page, canvas }) => {
+      const elements = canvas[0];
+      const ctx = elements.getContext("2d");
+      const viewport = page.getViewport({ scale: initialState.zoom });
+      const renderCtx = { canvasContext: ctx, viewport: viewport };
+      elements.height = viewport.height;
+      elements.width = viewport.width;
+      if (ENABLED_MAX_WIDTH.includes($(this).val())) {
+        canvas.css("max-width", "100vw");
+      } else {
+        canvas.css("max-width", "unset");
+      }
+      page.render(renderCtx);
+    });
+  });
+
+  // Initial pdf.js
+  PDFJS.getDocument(PDF_PATH)
+    .promise.then((doc) => {
+      initialState.pdfDoc = doc;
+      initialState.pageCount = initialState.pdfDoc.numPages;
+      if (initialState.pageCount > 0) {
+        initialState.currentPage = 1;
+        currentPageInput.val(1);
+        totalPagesElement.text(initialState.pageCount);
+        initPages();
+      }
+    })
+    .catch((err) => {
+      console.error(err);
     });
 
-    // Handle render specific page
-    async function render(number) {
-      if (number && number >= 1 && number <= lastPage) {
-        const container = document.createElement("div");
-        const textWrapper = document.createElement("div");
-        const canvas = document.createElement("canvas");
-        const canvasContext = canvas.getContext("2d");
-        const page = await doc.getPage(number);
-        const initViewport = await page.getViewport({ scale: scale });
-        const viewScale =
-          window.innerWidth > initViewport.width
-            ? scale
-            : window.innerWidth / initViewport.width;
-        const viewport = await page.getViewport({ scale: viewScale });
-        container.style.position = "relative";
-        container.style.marginBottom = "16px";
-        canvasHeight = viewport.height;
-        canvasWidth = viewport.width;
-        canvas.id = CANVAS_ID_TEMPLATE.replace(":id", number);
-        canvas.classList.add(CANVAS_CLASS);
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-        canvas.style.display = "block";
-        canvas.style.margin = "0 auto";
-        canvas.style.transformOrigin = "top left";
-        textWrapper.id = TEXT_LAYER_ID_TEMPLATE.replace(":id", number);
-        textWrapper.classList.add(TEXT_LAYER_CLASS);
-        textWrapper.style.height = viewport.height + "px";
-        textWrapper.style.width = viewport.width + "px";
-        textWrapper.style.top = 0 + "px";
-        textWrapper.style.left = "50%";
-        textWrapper.style.transform = "translateX(-50%)";
-        textWrapper.style.position = "absolute";
-        textWrapper.style.transformOrigin = "top left";
-        textWrapper.style.zIndex = "1";
-        await page.render({ canvasContext, viewport }).promise;
-        const { items, styles } = await page.getTextContent();
-        Object.entries(styles).forEach(([className, value]) => {
-          addStyle({ ["." + className]: { fontFamily: value.fontFamily } });
-        });
-        items.forEach((item, index) => {
-          // console.log(item);
-          // let span = document.createElement("span");
-          // span.innerText = item.str;
-          // span.setAttribute("role", "presentation");
-          // span.setAttribute("dir", item.dir);
-          // span.classList.add(item.fontName);
-          // textWrapper.appendChild(span);
-        });
-        container.append(canvas, textWrapper);
-        pdfContainer.append(container);
-      } else {
-        console.error("Please specify a valid page number");
-      }
-    }
+  // Render pages
+  function initPages() {
+    Object.values(ZOOM_LEVELS).forEach((level) => {
+      const option = `<option value="${level.value}">${level.title}</option>`;
+      zoomDropdown.html(zoomDropdown.html() + option);
+    });
 
-    // Handle change page
-    async function changePage() {
-      const id = CANVAS_ID_TEMPLATE.replace(":id", currentPage);
-      const page = document.getElementById(id);
-      page.scrollIntoView({ behavior: "smooth" });
-      currentPageEl.val(currentPage);
-      prevBtn.removeClass("disabled");
-      nextBtn.removeClass("disabled");
-      if (currentPage === 1) {
-        prevBtn.addClass("disabled");
-      } else if (currentPage === lastPage) {
-        nextBtn.addClass("disabled");
-      }
-    }
-
-    // Init all pages
-    async function init() {
-      currentPageEl.val(currentPage);
-      prevBtn.addClass("disabled");
-      totalPagesEl.text(lastPage);
-      for (let i = firstPage; i <= lastPage; i++) {
-        await render(i);
-      }
-    }
-
-    // Add stylesheet
-    function addStyle(style) {
-      let allStyles = [];
-
-      $.each(style, function (selector, rules) {
-        let arr = $.map(rules, function (value, prop) {
-          return " " + camelToKebabCase(prop) + ": " + value + ";";
-        });
-        allStyles.push(selector + " {\n" + arr.join("\n") + "\n}");
+    for (let i = initialState.currentPage; i <= initialState.pageCount; i++) {
+      initialState.pdfDoc.getPage(i).then((page) => {
+        const canvas = $("<canvas></canvas>");
+        const elements = canvas[0];
+        const ctx = elements.getContext("2d");
+        const actualViewport = page.getViewport({ scale: 1 });
+        const viewport = page.getViewport({ scale: initialState.zoom });
+        const renderCtx = { canvasContext: ctx, viewport: viewport };
+        initialState.viewport = viewport;
+        initialState.actualViewport = actualViewport;
+        canvas.addClass(CANVAS_CLASS);
+        elements.height = viewport.height;
+        elements.width = viewport.width;
+        elements.style.margin = "0 auto";
+        elements.style.marginTop = CANVAS_MARGIN + "px";
+        elements.style.marginBottom = CANVAS_MARGIN + "px";
+        elements.id = CANVAS_ID_TEMPLATE.replace(":id", i);
+        pages.push({ canvas, page });
+        page.render(renderCtx);
+        pdfContainer.append(elements);
       });
-
-      $("<style>")
-        .prop("type", "text/css")
-        .html(allStyles.join("\n"))
-        .appendTo("head");
     }
+  }
 
-    // Convert camel case to kebab case
-    function camelToKebabCase(str) {
-      return str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+  function convertZoomNumber(level) {
+    switch (level) {
+      case ZOOM_LEVELS.auto.value:
+        return CSS_UNIT;
+
+      case ZOOM_LEVELS.actual.value:
+        return 1;
+
+      case ZOOM_LEVELS.width.value:
+        return (
+          window.innerWidth /
+          (initialState.actualViewport.width + CANVAS_MARGIN * 2)
+        );
+
+      case ZOOM_LEVELS.fit.value:
+        return (
+          (initialState.viewport.height - CANVAS_MARGIN * 2) /
+          window.innerHeight
+        );
+
+      default:
+        return Number.isNaN(parseFloat(level)) ? CSS_UNIT : parseFloat(level);
     }
-
-    // Convert zoom level
-    function convertZoomLevel(level) {
-      let zoom = 1;
-      switch (level) {
-        case zoomLevels.auto.value:
-          zoom = pdfjsLib.PixelsPerInch.PDF_TO_CSS_UNITS;
-          break;
-
-        case zoomLevels.actual.value:
-          zoom = 1;
-          break;
-
-        case zoomLevels.width.value:
-          zoom = 1;
-          break;
-
-        case zoomLevels.fit.value:
-          zoom = 1;
-          break;
-
-        default:
-          zoom = level;
-          break;
-      }
-      return zoom;
-    }
-
-    // Log pdfjs library
-    // console.log(window);
-    // console.log(pdfjsLib);
-    // console.log(doc);
   }
 });

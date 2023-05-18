@@ -132,12 +132,28 @@ body::-webkit-scrollbar {
 
 /* End reight controller */
 
+/* PDF Container */
+
 #pdf-app #pdf-container {
   width: 100%;
-  padding: 16px 0;
   height: calc(100vh - var(--controller-height));
   overflow-y: scroll;
 }
+
+#pdf-app #pdf-container.vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+#pdf-app #pdf-container .canvas-layer {
+  max-width: 100vw;
+  display: block;
+  transition: all .1s ease-in-out;
+}
+
+/* End PDF Container */
 
 .focus-btn, .hover-btn {
   width: 28px;

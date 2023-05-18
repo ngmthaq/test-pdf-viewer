@@ -29,7 +29,7 @@
                     <i class="bi bi-chevron-down"></i>
                 </div>
                 <div id="page-container" class="d-none d-lg-block">
-                    <input type="text" id="current-page" value="0">
+                    <input type="text" id="current-page">
                     <span id="separator">of</span>
                     <span id="total-pages">0</span>
                 </div>
