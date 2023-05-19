@@ -8,9 +8,9 @@ class App
 
     public function __construct()
     {
-        $this->pdf = new PDF();
         $this->get = $this->prepare($_GET);
         $this->post = $this->prepare($_POST);
+        $this->pdf = new PDF($this->get, $this->post);
     }
 
     public function run()

@@ -1,6 +1,8 @@
 <script>
     $(document).ready(function() {
-        // Static paths
+        const restrictions = <?php echo $restrictions ?>;
+
+        let pages = [];
         let initialState = {
             pdfDoc: null,
             currentPage: 0,
@@ -23,10 +25,6 @@
             isRequestingPassword: false,
         };
 
-        let pages = [];
-
-        const restrictions = <?php echo $restrictions ?>;
-
         // Navigation elements
         const loading = $(document).find("#loading");
         const sidebarButton = $(document).find("#sidebar-controller");
@@ -39,9 +37,11 @@
         const zoomInButton = $(document).find("#zoom-in");
         const zoomDropdown = $(document).find("#zoom-select-options");
         const pdfContainer = $(document).find("#pdf-container");
+        const miniPdfContainer = $(document).find("#mini-pdf-container");
         const openFullScreenBtn = $(document).find("#open-fullscreen-btn");
         const printButton = $(document).find("#print-btn");
         const downloadButton = $(document).find("#download-btn");
+        const toolButton = $(document).find("#dropdown-btn");
 
         $("html").attr("lang", lng);
         $("html").attr("data-lang-iso", iso);
@@ -49,6 +49,7 @@
         pdfContainer.addClass(initialState.viewMode);
         currentPageInput.numeric();
         prevButton.addClass("disabled");
+        searchButton.addClass("disabled");
 
         // Click prev button
         prevButton.click(function() {
@@ -252,6 +253,7 @@
             }
         });
 
+        // Open request password prompt when winfow re-focus
         window.addEventListener("focus", function(e) {
             if (initialState.isRequestingPassword) {
                 requestPassword(restrictions);
@@ -273,7 +275,24 @@
                         currentPageInput.val(1);
                         totalPagesElement.text(initialState.pageCount);
                         initPages();
-                        getI18n().then((langs) => {});
+                        getI18n().then((langs) => {
+                            console.log(langs);
+                            sidebarButton.attr("title", langs.toggle_sidebar_label);
+                            searchButton.attr("title", langs["find_input.placeholder"]);
+                            prevButton.attr("title", langs["previous.title"]);
+                            nextButton.attr("title", langs["next.title"]);
+                            zoomOutButton.attr("title", langs.zoom_out_label);
+                            zoomInButton.attr("title", langs.zoom_in_label);
+                            $("#" + ZOOM_LEVELS.auto.id).text(langs.page_scale_auto);
+                            $("#" + ZOOM_LEVELS.actual.id).text(langs.page_scale_actual);
+                            $("#" + ZOOM_LEVELS.fit.id).text(langs.page_scale_fit);
+                            $("#" + ZOOM_LEVELS.width.id).text(langs.page_scale_width);
+                            $("#separator").text(langs.of_pages.replace("{{pagesCount}}", ""));
+                            openFullScreenBtn.attr("title", langs.presentation_mode_label);
+                            downloadButton.attr("title", langs.download_label);
+                            printButton.attr("title", langs.print_label);
+                            toolButton.attr("title", langs.tools_label);
+                        });
                     }
                 })
                 .catch((err) => {
@@ -281,7 +300,7 @@
                 });
         }
 
-        // Render pages
+        // Init pdf pages
         function initPages() {
             const lastOption = `<option style="display: none;" value="" id="${ZOOM_OPTION_PSUEDO}"></option>`;
             Object.values(ZOOM_LEVELS).forEach((level, index) => {
@@ -293,6 +312,7 @@
 
             for (let i = initialState.currentPage; i <= initialState.pageCount; i++) {
                 initialState.pdfDoc.getPage(i).then((page) => {
+                    // Main pdf page
                     const div = $("<div></div>");
                     const wrapper = div[0];
                     const canvas = $("<canvas></canvas>");
@@ -334,10 +354,37 @@
                     });
                     page.render(renderCtx);
                     pdfContainer.append(wrapper);
+                    return page;
+                }).then((page) => {
+                    // Mini pdf page
+                    const div = $("<div></div>");
+                    const wrapper = div[0];
+                    const canvas = $("<canvas></canvas>");
+                    const elements = canvas[0];
+                    const ctx = elements.getContext("2d");
+                    const viewport = page.getViewport({
+                        scale: 1
+                    });
+                    const renderCtx = {
+                        canvasContext: ctx,
+                        viewport: viewport
+                    };
+                    canvas.addClass(CANVAS_CLASS);
+                    elements.height = viewport.height;
+                    elements.width = viewport.width;
+                    elements.style.margin = "0 auto";
+                    elements.style.marginTop = CANVAS_MARGIN + "px";
+                    elements.style.marginBottom = CANVAS_MARGIN + "px";
+                    elements.id = CANVAS_ID_TEMPLATE.replace(":id", i);
+                    wrapper.style.width = "100%";
+                    wrapper.append(elements);
+                    page.render(renderCtx);
+                    miniPdfContainer.append(wrapper);
                 });
             }
         }
 
+        // Convert text to zoom number
         function convertZoomNumber(level) {
             switch (level) {
                 case ZOOM_LEVELS.auto.value:
@@ -366,6 +413,7 @@
             }
         }
 
+        // Get i18n
         function getI18n() {
             return new Promise((resolve, reject) => {
                 let langs = {};
@@ -397,6 +445,7 @@
             });
         }
 
+        // Request get PDF
         function requestPDF(path, password = "") {
             loading.css("display", "flex");
             $.ajax({
@@ -415,6 +464,7 @@
                     render(path, password)
                     loading.css("display", "none");
                     downloadButton.click(function() {
+                        // Event download file
                         downloadFile(path);
                     });
                 },
@@ -425,6 +475,7 @@
             });
         }
 
+        // Request enter pdf password
         function requestPassword(restrictions, retry = 0) {
             let value = window.prompt(retry === 0 ? "Enter the password to open PDF file" : "Wrong password, enter the password to open PDF file");
             if (value && value === restrictions.ppw) {
@@ -438,6 +489,7 @@
             }
         }
 
+        // Download file
         function downloadFile(path, fileName = "documentation.pdf") {
             const link = document.createElement('a');
             link.href = path;
@@ -447,6 +499,7 @@
             link.remove();
         }
 
+        // Main
         if (restrictions) {
             if (restrictions.ppw === "") {
                 requestPDF("/");

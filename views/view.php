@@ -61,7 +61,10 @@
                 </div>
             </div>
         </header>
-        <section id="pdf-container"></section>
+        <section id="section-container">
+            <aside id="mini-pdf-container"></aside>
+            <div id="pdf-container"></div>
+        </section>
     </main>
 
     <!-- Loading element -->

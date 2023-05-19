@@ -2,6 +2,15 @@
 
 class PDF
 {
+    protected array $get;
+    protected array $post;
+
+    public function __construct(array $get, array $post)
+    {
+        $this->get = $get;
+        $this->post = $post;
+    }
+
     public function getContent(string $path)
     {
         header("Cache-Control: public");
