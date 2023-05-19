@@ -203,3 +203,19 @@ body::-webkit-scrollbar {
   color: var(--btn-disabled-color) !important;
   background-color: transparent !important;
 }
+
+
+/* LOADING */
+
+#loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(102, 102, 103, 0.5);
+  z-index: 1;
+}

@@ -20,9 +20,12 @@
         height: 0
       },
       isFullscreen: false,
+      isRequestingPassword: false,
     };
 
     let pages = [];
+
+    const restrictions = <?php echo $restrictions ?>;
 
     // Navigation elements
     const sidebarButton = $(document).find("#sidebar-controller");
@@ -37,6 +40,7 @@
     const pdfContainer = $(document).find("#pdf-container");
     const openFullScreenBtn = $(document).find("#open-fullscreen-btn");
     const printBtn = $(document).find("#print-btn");
+    const loading = $(document).find("#loading");
 
     $("html").attr("lang", lng);
     $("html").attr("data-lang-iso", iso);
@@ -237,9 +241,28 @@
       pdfContainer.printThis();
     });
 
+    // Ctrl + P
+    document.addEventListener("keydown", function(event) {
+      if ((event.ctrlKey || event.metaKey) && event.keyCode === 80) {
+        console.log(pdfContainer.printThis);
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        pdfContainer.printThis();
+      }
+    });
+
+    window.addEventListener("focus", function(e) {
+      if (initialState.isRequestingPassword) {
+        requestPassword(restrictions);
+      }
+    })
+
     // Initial pdf.js
-    function render(path = PDF_PATH_DEFAULT) {
+    function render(path, password = "") {
       const LOADING_TASK = PDFJS.getDocument(path);
+      LOADING_TASK.onPassword = function(callback, reason) {
+        callback(password);
+      }
       LOADING_TASK.promise
         .then((doc) => {
           initialState.pdfDoc = doc;
@@ -373,6 +396,47 @@
       });
     }
 
-    render();
+    function requestPDF(path, password = "") {
+      loading.css("display", "flex");
+      $.ajax({
+        type: "get",
+        url: path,
+        data: {
+          pdf: true
+        },
+        xhr: function() {
+          let xhr = new XMLHttpRequest();
+          xhr.responseType = 'blob'
+          return xhr;
+        },
+        success: function(response) {
+          let path = window.URL.createObjectURL(response);
+          render(path, password)
+          loading.css("display", "none");
+        }
+      });
+    }
+
+    function requestPassword(restrictions, retry = 0) {
+      let value = window.prompt(retry === 0 ? "Enter the password to open PDF file" : "Wrong password, enter the password to open PDF file");
+      if (value && value === restrictions.ppw) {
+        requestPDF("/", restrictions.ppw);
+        initialState.isRequestingPassword = false;
+      } else {
+        if (value !== null) {
+          retry = retry + 1;
+          requestPassword(restrictions, retry);
+        }
+      }
+    }
+
+    if (restrictions) {
+      if (restrictions.ppw === "") {
+        requestPDF("/");
+      } else {
+        initialState.isRequestingPassword = true;
+        requestPassword(restrictions);
+      }
+    }
   });
 </script>

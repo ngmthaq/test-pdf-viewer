@@ -16,7 +16,7 @@ class App
     public function run()
     {
         if (array_key_exists("pdf", $this->get)) {
-            $this->pdf->getContent("http://localhost:8082/pdf.php");
+            echo $this->pdf->getContent("http://localhost:8082/pdf.php");
         } else {
             $restrictions = $this->pdf->getRestrictions("http://localhost:8082/");
             header('Content-Type: text/html; charset=utf-8');

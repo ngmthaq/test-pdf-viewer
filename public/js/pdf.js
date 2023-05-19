@@ -91,3 +91,5 @@ const VIEW_MODES = {
     value: "wrapped",
   },
 };
+
+document.createElement("span")
