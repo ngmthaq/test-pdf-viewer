@@ -10,6 +10,11 @@
     <link rel="stylesheet" href="<?php assets('libs/icons/font/bootstrap-icons.min.css') ?>">
     <link rel="stylesheet" href="<?php assets('css/pdf.css') ?>">
     <title>PDF</title>
+    <script src="<?php assets('libs/jquery/index.min.js') ?>"></script>
+    <script src="<?php assets('libs/jquery/numeric.plugin.min.js') ?>"></script>
+    <script src="<?php assets('libs/jquery/print.plugin.js') ?>"></script>
+    <script src="<?php assets('libs/bootstrap/js/bootstrap.min.js') ?>"></script>
+    <script src="<?php assets('libs/pdfjs/build/pdf.js') ?>"></script>
 </head>
 
 <body>
@@ -60,12 +65,10 @@
         <section id="pdf-container"></section>
     </main>
 
-    <script src="<?php assets('libs/jquery/index.min.js') ?>"></script>
-    <script src="<?php assets('libs/jquery/numeric.plugin.min.js') ?>"></script>
-    <script src="<?php assets('libs/jquery/print.plugin.js') ?>"></script>
-    <script src="<?php assets('libs/bootstrap/js/bootstrap.min.js') ?>"></script>
-    <script src="<?php assets('libs/pdfjs/build/pdf.js') ?>"></script>
+    <script src="<?php assets('js/hash.js') ?>"></script>
     <script src="<?php assets('js/pdf.js') ?>"></script>
+    <?php include(ROOT_DIR . "\\views\\script.php") ?>
+
 </body>
 
 </html>

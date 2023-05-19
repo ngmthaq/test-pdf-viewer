@@ -15,7 +15,13 @@ class App
 
     public function run()
     {
-        $this->render("pdf.php");
+        if (array_key_exists("pdf", $this->get)) {
+            $this->pdf->getContent("http://localhost:8082/pdf.php");
+        } else {
+            $restrictions = $this->pdf->getRestrictions("http://localhost:8082/");
+            header('Content-Type: text/html; charset=utf-8');
+            $this->render("view.php", compact("restrictions"));
+        }
     }
 
     protected function render(string $path, array $variables = [])
