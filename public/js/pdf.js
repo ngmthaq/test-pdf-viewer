@@ -74,7 +74,11 @@ const ZOOM_LEVELS = {
   },
 };
 
-const ENABLED_MAX_WIDTH = [ZOOM_LEVELS.auto.value, ZOOM_LEVELS.fit.value, ZOOM_LEVELS.width.value];
+const ENABLED_MAX_WIDTH = [
+  ZOOM_LEVELS.auto.value,
+  ZOOM_LEVELS.fit.value,
+  ZOOM_LEVELS.width.value,
+];
 
 // View modes
 const VIEW_MODES = {
@@ -91,5 +95,3 @@ const VIEW_MODES = {
     value: "wrapped",
   },
 };
-
-document.createElement("span")

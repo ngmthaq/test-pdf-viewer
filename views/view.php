@@ -49,6 +49,9 @@
                 <div id="open-fullscreen-btn" class="hover-btn d-none d-lg-flex">
                     <i class="bi bi-arrows-fullscreen"></i>
                 </div>
+                <div id="download-btn" class="hover-btn d-none d-lg-flex">
+                    <i class="bi bi-download"></i>
+                </div>
                 <div id="print-btn" class="hover-btn d-none d-lg-flex">
                     <i class="bi bi-printer"></i>
                 </div>
