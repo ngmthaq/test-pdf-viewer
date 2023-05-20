@@ -23,6 +23,7 @@
             },
             isFullscreen: false,
             isRequestingPassword: false,
+            isOpenSidebar: false,
         };
 
         // Navigation elements
@@ -43,8 +44,7 @@
         const downloadButton = $(document).find("#download-btn");
         const toolButton = $(document).find("#dropdown-btn");
 
-        $("html").attr("lang", lng);
-        $("html").attr("data-lang-iso", iso);
+        $("html").attr("lang", lang);
 
         pdfContainer.addClass(initialState.viewMode);
         currentPageInput.numeric();
@@ -58,10 +58,20 @@
                 let id = CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage);
                 currentPageInput.val(initialState.currentPage);
                 let el = document.getElementById(id);
-                if (el) el.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start"
-                });
+                if (el) {
+                    pdfContainer[0].scrollTo({
+                        top: el.offsetTop
+                    });
+                }
+                let miniid = MINI_CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage);
+                let miniel = document.getElementById(miniid);
+                if (miniel) {
+                    miniPdfContainer[0].scrollTo({
+                        top: miniel.offsetTop
+                    });
+                }
+                $(`.${MINI_PDF_WRAPPER_CLASS}`).removeClass("active");
+                $(`.${MINI_PDF_WRAPPER_CLASS}[data-id="${initialState.currentPage}"]`).addClass("active");
                 nextButton.removeClass("disabled");
                 initialState.currentPage === 1 && $(this).addClass("disabled");
             }
@@ -74,10 +84,20 @@
                 let id = CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage);
                 currentPageInput.val(initialState.currentPage);
                 let el = document.getElementById(id);
-                if (el) el.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start"
-                });
+                if (el) {
+                    pdfContainer[0].scrollTo({
+                        top: el.offsetTop
+                    });
+                }
+                let miniid = MINI_CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage);
+                let miniel = document.getElementById(miniid);
+                if (miniel) {
+                    miniPdfContainer[0].scrollTo({
+                        top: miniel.offsetTop
+                    });
+                }
+                $(`.${MINI_PDF_WRAPPER_CLASS}`).removeClass("active");
+                $(`.${MINI_PDF_WRAPPER_CLASS}[data-id="${initialState.currentPage}"]`).addClass("active");
                 prevButton.removeClass("disabled");
                 initialState.currentPage === initialState.pageCount &&
                     $(this).addClass("disabled");
@@ -104,12 +124,16 @@
                 let id = CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage);
                 let el = document.getElementById(id);
                 $(this).val(val);
-                setTimeout(() => {
-                    if (el) el.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start"
-                    });
-                }, 1);
+                pdfContainer[0].scrollTo({
+                    top: el.offsetTop
+                });
+                let miniid = MINI_CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage);
+                let miniel = document.getElementById(miniid);
+                miniPdfContainer[0].scrollTo({
+                    top: miniel.offsetTop
+                });
+                $(`.${MINI_PDF_WRAPPER_CLASS}`).removeClass("active");
+                $(`.${MINI_PDF_WRAPPER_CLASS}[data-id="${initialState.currentPage}"]`).addClass("active");
             }
         });
 
@@ -246,7 +270,6 @@
         // Ctrl + P
         document.addEventListener("keydown", function(event) {
             if ((event.ctrlKey || event.metaKey) && event.keyCode === 80) {
-                console.log(pdfContainer.printThis);
                 event.preventDefault();
                 event.stopImmediatePropagation();
                 pdfContainer.printThis();
@@ -258,6 +281,14 @@
             if (initialState.isRequestingPassword) {
                 requestPassword(restrictions);
             }
+        })
+
+        // Toggle open sidebar
+        sidebarButton.click(function(e) {
+            pdfContainer.toggleClass("fullwidth");
+            miniPdfContainer.toggleClass("close");
+            $(this).toggleClass("active");
+            initialState.isOpenSidebar = !initialState.isOpenSidebar;
         })
 
         // Initial pdf.js
@@ -274,9 +305,8 @@
                         initialState.currentPage = 1;
                         currentPageInput.val(1);
                         totalPagesElement.text(initialState.pageCount);
-                        initPages();
                         getI18n().then((langs) => {
-                            console.log(langs);
+                            initPages(langs);
                             sidebarButton.attr("title", langs.toggle_sidebar_label);
                             searchButton.attr("title", langs["find_input.placeholder"]);
                             prevButton.attr("title", langs["previous.title"]);
@@ -301,7 +331,7 @@
         }
 
         // Init pdf pages
-        function initPages() {
+        function initPages(langs) {
             const lastOption = `<option style="display: none;" value="" id="${ZOOM_OPTION_PSUEDO}"></option>`;
             Object.values(ZOOM_LEVELS).forEach((level, index) => {
                 const id = level.id || "zoom-level-" + index;
@@ -347,6 +377,8 @@
                         initialState.currentPage === 1 && prevButton.addClass("disabled");
                         initialState.currentPage === initialState.pageCount &&
                             nextButton.addClass("disabled");
+                        $(`.${MINI_PDF_WRAPPER_CLASS}`).removeClass("active");
+                        $(`.${MINI_PDF_WRAPPER_CLASS}[data-id="${initialState.currentPage}"]`).addClass("active");
                     });
                     pages.push({
                         canvas,
@@ -375,9 +407,23 @@
                     elements.style.margin = "0 auto";
                     elements.style.marginTop = CANVAS_MARGIN + "px";
                     elements.style.marginBottom = CANVAS_MARGIN + "px";
-                    elements.id = CANVAS_ID_TEMPLATE.replace(":id", i);
+                    elements.id = MINI_CANVAS_ID_TEMPLATE.replace(":id", i);
+                    wrapper.setAttribute("data-id", i);
+                    wrapper.className = "d-flex justify-content-center align-items-center " + MINI_PDF_WRAPPER_CLASS;
+                    if (i === 1) wrapper.className += " active";
                     wrapper.style.width = "100%";
+                    wrapper.setAttribute("title", langs.page_landmark.replace("{{page}}", i));
                     wrapper.append(elements);
+                    wrapper.onclick = function(e) {
+                        initialState.currentPage = i
+                        $(`.${MINI_PDF_WRAPPER_CLASS}`).removeClass("active");
+                        $(`.${MINI_PDF_WRAPPER_CLASS}[data-id="${initialState.currentPage}"]`).addClass("active");
+                        currentPageInput.val(i);
+                        let el = document.getElementById(CANVAS_ID_TEMPLATE.replace(":id", i));
+                        pdfContainer[0].scrollTo({
+                            top: el.offsetTop
+                        });
+                    }
                     page.render(renderCtx);
                     miniPdfContainer.append(wrapper);
                 });
@@ -416,12 +462,12 @@
         // Get i18n
         function getI18n() {
             return new Promise((resolve, reject) => {
-                let langs = {};
+                let locale = locales.shift();
                 let i18nUrlTemplate =
-                    "/public/libs/pdfjs/web/locale/:lng/viewer.properties";
+                    "/public/libs/pdfjs/web/locale/:lang/viewer.properties";
                 $.ajax({
                     type: "get",
-                    url: i18nUrlTemplate.replace(":lng", lng),
+                    url: i18nUrlTemplate.replace(":lang", locale),
                     dataType: "html",
                     success: function(response) {
                         let output = {};
@@ -433,13 +479,12 @@
                             let [key, value] = item.split("=");
                             output[key] = value;
                         });
-                        langs = {
-                            ...output
-                        };
-                        resolve(langs);
+                        resolve(output);
                     },
                     error: function(xhr, status, error) {
-                        reject(error);
+                        if (xhr.status === 404) {
+                            resolve(getI18n());
+                        }
                     },
                 });
             });
@@ -460,17 +505,18 @@
                     return xhr;
                 },
                 success: function(response) {
-                    let path = window.URL.createObjectURL(response);
+                    let path = PDF_PATH_DEFAULT;
+                    if (response.size > 0) {
+                        path = window.URL.createObjectURL(response);
+                    }
                     render(path, password)
                     loading.css("display", "none");
                     downloadButton.click(function() {
-                        // Event download file
                         downloadFile(path);
                     });
                 },
                 error: function(xhr, status, error) {
                     alert("Something wrong, please try again later");
-                    window.close();
                 }
             });
         }
@@ -499,7 +545,7 @@
             link.remove();
         }
 
-        // Main
+        // Main flow
         if (restrictions) {
             if (restrictions.ppw === "") {
                 requestPDF("/");

@@ -1,5 +1,5 @@
 const PDF_WORKER = "/public/libs/pdfjs/build/pdf.worker.js";
-const PDF_PATH_DEFAULT = "/public/static/pdf2.pdf";
+const PDF_PATH_DEFAULT = "/public/static/pdf.pdf";
 
 // PDF.js library
 const PDFJS = window["pdfjs-dist/build/pdf"];
@@ -8,6 +8,8 @@ PDFJS.GlobalWorkerOptions.workerSrc = PDF_WORKER;
 // Template string
 const ZOOM_OPTION_PSUEDO = "zoom-option-psuedo";
 const CANVAS_ID_TEMPLATE = "pdf-viewer-:id";
+const MINI_CANVAS_ID_TEMPLATE = "mini-pdf-viewer-:id";
+const MINI_PDF_WRAPPER_CLASS = "mini-pdf-wrapper";
 const CONTAINER_ID_TEMPLATE = "pdf-container-:id";
 const CANVAS_CLASS = "canvas-layer";
 const CANVAS_MARGIN = 8;
@@ -16,7 +18,8 @@ const CANVAS_MARGIN = 8;
 const CSS_UNIT = PDFJS.PixelsPerInch.PDF_TO_CSS_UNITS;
 
 // Locale
-const [iso, lng] = window.navigator.languages;
+const lang = window.navigator.language;
+const locales = window.navigator.languages.map((l) => l);
 
 // Zoom levels
 const ZOOM_LEVELS = {

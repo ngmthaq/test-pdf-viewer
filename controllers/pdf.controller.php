@@ -16,14 +16,24 @@ class PDF
         header("Cache-Control: public");
         header("Content-Type: application/pdf");
         header("Content-Transfer-Encoding: Binary");
-        $file = file_get_contents($path);
+        $file = $this->getFileContent($path);
         return $file;
     }
 
     public function getRestrictions(string $path)
     {
         header('Content-Type: application/json; charset=utf-8');
-        $file = file_get_contents($path);
+        $file = $this->getFileContent($path);
         return $file;
+    }
+
+    public function getFileContent($path)
+    {
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_URL, $path);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+        $content = curl_exec($curl);
+        curl_close($curl);
+        echo $content;
     }
 }

@@ -2,6 +2,8 @@
   /* Element Height */
   --controller-height: 35px;
 
+  /* Element Width */
+  --mini-pdf-container-width: 200px;
   /* Color */
   --header-bg-color: #38383d;
   --btn-main-color: rgba(249, 249, 250, 1);
@@ -14,6 +16,7 @@
 * {
   padding: 0;
   margin: 0;
+  scroll-behavior: smooth;
 }
 
 body {
@@ -153,17 +156,22 @@ body::-webkit-scrollbar {
 
 #section-container {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #mini-pdf-container {
-  position: absolute;
-  top: 0;
-  left: 0;
+  width: var(--mini-pdf-container-width);
   height: calc(100vh - var(--controller-height));
+  background-color: var(--header-bg-color);
+  transition: all .25s ease-in-out;
   overflow-y: scroll;
-  width: 200px;
-  background-color: bisque;
-  transition: all .2s ease-in-out;
+  transform: translateX(0);
+}
+
+#mini-pdf-container.close {
+  transform: translateX(-250px);
 }
 
 #mini-pdf-container .canvas-layer {
@@ -171,10 +179,25 @@ body::-webkit-scrollbar {
   height: auto;
 }
 
+#mini-pdf-container .mini-pdf-wrapper:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+}
+
+#mini-pdf-container .mini-pdf-wrapper.active {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
 #pdf-app #pdf-container {
-  width: 100%;
+  width: calc(100vw - var(--mini-pdf-container-width));
   height: calc(100vh - var(--controller-height));
   overflow-y: scroll;
+  transition: all .25s ease-in-out;
+  flex-shrink: 0;
+}
+
+#pdf-app #pdf-container.fullwidth {
+  width: 100vw;
 }
 
 #pdf-app #pdf-container.fullscreen::-webkit-scrollbar {

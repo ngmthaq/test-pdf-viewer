@@ -18,7 +18,8 @@ class App
         if (array_key_exists("pdf", $this->get)) {
             echo $this->pdf->getContent("http://localhost:8082/pdf.php");
         } else {
-            $restrictions = $this->pdf->getRestrictions("http://localhost:8082/");
+            $default_restrictions = json_encode(array("ppw" => "", "alf" => ""));
+            $restrictions = $this->pdf->getRestrictions("http://localhost:8082/") ?? $default_restrictions;
             header('Content-Type: text/html; charset=utf-8');
             $this->render("view.php", compact("restrictions"));
         }

@@ -17,7 +17,7 @@
     <main id="pdf-app">
         <header id="controller">
             <div class="left-controller">
-                <div id="sidebar-controller" class="focus-btn">
+                <div id="sidebar-controller" class="focus-btn d-none d-lg-flex">
                     <i class="bi bi-layout-sidebar-inset"></i>
                 </div>
                 <div id="search-controller" class="focus-btn">
@@ -47,7 +47,7 @@
             </div>
             <div class="right-controller">
                 <div id="open-fullscreen-btn" class="hover-btn d-none d-lg-flex">
-                    <i class="bi bi-arrows-fullscreen"></i>
+                    <i class="bi bi-easel2"></i>
                 </div>
                 <div id="download-btn" class="hover-btn d-none d-lg-flex">
                     <i class="bi bi-download"></i>
@@ -62,8 +62,8 @@
             </div>
         </header>
         <section id="section-container">
-            <aside id="mini-pdf-container"></aside>
-            <div id="pdf-container"></div>
+            <aside id="mini-pdf-container" class="close"></aside>
+            <div id="pdf-container" class="fullwidth"></div>
         </section>
     </main>
 
