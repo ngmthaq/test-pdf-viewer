@@ -188,7 +188,8 @@
                 const elements = canvas[0];
                 const ctx = elements.getContext("2d");
                 const viewport = page.getViewport({
-                    scale: initialState.zoom
+                    scale: initialState.zoom,
+                    rotation: initialState.curentRotate,
                 });
                 const renderCtx = {
                     canvasContext: ctx,
@@ -223,7 +224,8 @@
                     const elements = canvas[0];
                     const ctx = elements.getContext("2d");
                     const viewport = page.getViewport({
-                        scale: initialState.zoom
+                        scale: initialState.zoom,
+                        rotation: initialState.curentRotate,
                     });
                     const renderCtx = {
                         canvasContext: ctx,
@@ -259,7 +261,8 @@
                     const elements = canvas[0];
                     const ctx = elements.getContext("2d");
                     const viewport = page.getViewport({
-                        scale: initialState.zoom
+                        scale: initialState.zoom,
+                        rotation: initialState.curentRotate,
                     });
                     const renderCtx = {
                         canvasContext: ctx,
@@ -384,13 +387,57 @@
         // Rotate right
         toolRotateRight.click(function() {
             initialState.curentRotate += initialState.rotate;
-            $("." + CANVAS_WRAPPER_CLASS).css("transform", `rotate(${initialState.curentRotate}deg)`);
+            pages.forEach(({
+                page,
+                canvas
+            }) => {
+                const elements = canvas[0];
+                const ctx = elements.getContext("2d");
+                const viewport = page.getViewport({
+                    scale: initialState.zoom,
+                    rotation: initialState.curentRotate,
+                });
+                const renderCtx = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+                elements.height = viewport.height;
+                elements.width = viewport.width;
+                if (ENABLED_MAX_WIDTH.includes($(this).val())) {
+                    canvas.css("max-width", "100vw");
+                } else {
+                    canvas.css("max-width", "unset");
+                }
+                page.render(renderCtx);
+            });
         })
 
         // Rotate left
         toolRotateLeft.click(function() {
             initialState.curentRotate -= initialState.rotate;
-            $("." + CANVAS_WRAPPER_CLASS).css("transform", `rotate(${initialState.curentRotate}deg)`);
+            pages.forEach(({
+                page,
+                canvas
+            }) => {
+                const elements = canvas[0];
+                const ctx = elements.getContext("2d");
+                const viewport = page.getViewport({
+                    scale: initialState.zoom,
+                    rotation: initialState.curentRotate,
+                });
+                const renderCtx = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+                elements.height = viewport.height;
+                elements.width = viewport.width;
+                if (ENABLED_MAX_WIDTH.includes($(this).val())) {
+                    canvas.css("max-width", "100vw");
+                } else {
+                    canvas.css("max-width", "unset");
+                }
+                page.render(renderCtx);
+            });
         })
 
         // Open document info modal
@@ -492,10 +539,12 @@
                     const elements = canvas[0];
                     const ctx = elements.getContext("2d");
                     const actualViewport = page.getViewport({
-                        scale: 1
+                        scale: 1,
+                        rotation: initialState.curentRotate,
                     });
                     const viewport = page.getViewport({
-                        scale: initialState.zoom
+                        scale: initialState.zoom,
+                        rotation: initialState.curentRotate,
                     });
                     const renderCtx = {
                         canvasContext: ctx,
@@ -506,7 +555,6 @@
                     canvas.addClass(CANVAS_CLASS);
                     elements.height = viewport.height;
                     elements.width = viewport.width;
-                    // elements.style.margin = "0 auto";
                     elements.style.marginTop = CANVAS_MARGIN + "px";
                     elements.style.marginBottom = CANVAS_MARGIN + "px";
                     elements.id = CANVAS_ID_TEMPLATE.replace(":id", i);
@@ -538,7 +586,8 @@
                     const elements = canvas[0];
                     const ctx = elements.getContext("2d");
                     const viewport = page.getViewport({
-                        scale: 1
+                        scale: 1,
+                        rotation: initialState.curentRotate,
                     });
                     const renderCtx = {
                         canvasContext: ctx,
@@ -547,7 +596,6 @@
                     canvas.addClass(CANVAS_CLASS);
                     elements.height = viewport.height;
                     elements.width = viewport.width;
-                    // elements.style.margin = "0 auto";
                     elements.style.marginTop = CANVAS_MARGIN + "px";
                     elements.style.marginBottom = CANVAS_MARGIN + "px";
                     elements.id = MINI_CANVAS_ID_TEMPLATE.replace(":id", i);
