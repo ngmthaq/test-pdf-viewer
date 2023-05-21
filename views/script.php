@@ -3,6 +3,7 @@
         const restrictions = <?php echo $restrictions ?>;
 
         let pages = [];
+        let langs = {};
         let initialState = {
             pdfDoc: null,
             currentPage: 0,
@@ -24,6 +25,19 @@
             isFullscreen: false,
             isRequestingPassword: false,
             isOpenSidebar: false,
+            info: {
+                name: "document.pdf",
+                size: 0,
+                title: "",
+                author: "",
+                category: "",
+                keyword: "",
+                createdAt: "",
+                updatedAt: "",
+                version: "0.0.0",
+                pdfViewerVersion: "0.0.0",
+                pages: 0
+            }
         };
 
         // Navigation elements
@@ -43,6 +57,28 @@
         const printButton = $(document).find("#print-btn");
         const downloadButton = $(document).find("#download-btn");
         const toolButton = $(document).find("#dropdown-btn");
+        const toolDrawer = $(document).find("#tools-drawer");
+        const toolModal = $(document).find("#tools-modal");
+        const toolFirstPage = $(document).find("#tools-firstpage");
+        const toolLastPage = $(document).find("#tools-lastpage");
+        const toolRotateRight = $(document).find("#tools-rotate-right");
+        const toolRotateLeft = $(document).find("#tools-rotate-left");
+        const toolPresenter = $(document).find("#tools-presenter");
+        const toolDownload = $(document).find("#tools-download");
+        const toolPrint = $(document).find("#tools-printer");
+        const toolDocInfo = $(document).find("#tools-info");
+        const docInfoName = $(document).find("#document-name");
+        const docInfoSize = $(document).find("#document-size");
+        const docInfoTitle = $(document).find("#document-title");
+        const docInfoAuthor = $(document).find("#document-author");
+        const docInfoCategory = $(document).find("#document-category");
+        const docInfoKeywords = $(document).find("#document-keywords");
+        const docInfoCreatedAt = $(document).find("#document-created-at");
+        const docInfoUpdatedAt = $(document).find("#document-updated-at");
+        const docInfoPdfViewerVersion = $(document).find("#document-pdf-viewer-version");
+        const docInfoPdfVersion = $(document).find("#document-pdf-version");
+        const docInfoTotalPages = $(document).find("#document-total-pages");
+        const docInfoHeading = $(document).find("#document-info-label");
 
         $("html").attr("lang", lang);
 
@@ -251,6 +287,18 @@
             }
         });
 
+        // Open fullscreen
+        toolPresenter.click(function() {
+            const elem = pdfContainer[0];
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+            }
+        });
+
         // Container fullscreen event
         pdfContainer.on("fullscreenchange", function(e) {
             if (initialState.isFullscreen) {
@@ -264,6 +312,11 @@
 
         // Click print
         printButton.click(function() {
+            pdfContainer.printThis();
+        });
+
+        // Click print
+        toolPrint.click(function() {
             pdfContainer.printThis();
         });
 
@@ -291,6 +344,57 @@
             initialState.isOpenSidebar = !initialState.isOpenSidebar;
         })
 
+        // Click tool button
+        toolButton.click(function() {
+            toolButton.toggleClass("active");
+            toolDrawer.toggleClass("open");
+            toolModal.toggleClass("open");
+        })
+
+        // Go to first page
+        toolFirstPage.click(function() {
+            initialState.currentPage = 1;
+            currentPageInput.val(initialState.currentPage);
+            let canvas = document.getElementById(CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage));
+            let miniCanvas = document.getElementById(MINI_CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage));
+            pdfContainer[0].scrollTo({
+                top: canvas.offsetTop
+            });
+            miniPdfContainer[0].scrollTo({
+                top: miniCanvas.offsetTop
+            });
+        })
+
+        // Go to last page
+        toolLastPage.click(function() {
+            initialState.currentPage = initialState.pageCount;
+            currentPageInput.val(initialState.currentPage);
+            let canvas = document.getElementById(CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage));
+            let miniCanvas = document.getElementById(MINI_CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage));
+            pdfContainer[0].scrollTo({
+                top: canvas.offsetTop
+            });
+            miniPdfContainer[0].scrollTo({
+                top: miniCanvas.offsetTop
+            });
+        })
+
+        // Open document info modal
+        toolDocInfo.click(function() {
+            console.log(initialState.info);
+            docInfoName.find("td").text(initialState.info.name);
+            docInfoSize.find("td").text(initialState.info.size + " byte");
+            docInfoTitle.find("td").text(initialState.info.title);
+            docInfoAuthor.find("td").text(initialState.info.author);
+            docInfoCategory.find("td").text(initialState.info.category);
+            docInfoKeywords.find("td").text(initialState.info.keyword);
+            docInfoCreatedAt.find("td").text(initialState.info.createdAt);
+            docInfoUpdatedAt.find("td").text(initialState.info.updatedAt);
+            docInfoPdfViewerVersion.find("td").text(initialState.info.pdfViewerVersion);
+            docInfoPdfVersion.find("td").text(initialState.info.version);
+            docInfoTotalPages.find("td").text(initialState.info.pages);
+        })
+
         // Initial pdf.js
         function render(path, password = "") {
             const LOADING_TASK = PDFJS.getDocument(path);
@@ -301,28 +405,53 @@
                 .then((doc) => {
                     initialState.pdfDoc = doc;
                     initialState.pageCount = initialState.pdfDoc.numPages;
+                    doc.getMetadata().then((metadata) => {
+                        initialState.info.size = metadata.contentLength;
+                        initialState.info.pages = initialState.pdfDoc.numPages;
+                        initialState.info.author = metadata.info.Creator || "";
+                        initialState.info.version = metadata.info.PDFFormatVersion || "";
+                        initialState.info.pdfViewerVersion = PDFJS.version;
+                    })
                     if (initialState.pageCount > 0) {
                         initialState.currentPage = 1;
                         currentPageInput.val(1);
                         totalPagesElement.text(initialState.pageCount);
-                        getI18n().then((langs) => {
-                            initPages(langs);
-                            sidebarButton.attr("title", langs.toggle_sidebar_label);
-                            searchButton.attr("title", langs["find_input.placeholder"]);
-                            prevButton.attr("title", langs["previous.title"]);
-                            nextButton.attr("title", langs["next.title"]);
-                            zoomOutButton.attr("title", langs.zoom_out_label);
-                            zoomInButton.attr("title", langs.zoom_in_label);
-                            $("#" + ZOOM_LEVELS.auto.id).text(langs.page_scale_auto);
-                            $("#" + ZOOM_LEVELS.actual.id).text(langs.page_scale_actual);
-                            $("#" + ZOOM_LEVELS.fit.id).text(langs.page_scale_fit);
-                            $("#" + ZOOM_LEVELS.width.id).text(langs.page_scale_width);
-                            $("#separator").text(langs.of_pages.replace("{{pagesCount}}", ""));
-                            openFullScreenBtn.attr("title", langs.presentation_mode_label);
-                            downloadButton.attr("title", langs.download_label);
-                            printButton.attr("title", langs.print_label);
-                            toolButton.attr("title", langs.tools_label);
-                        });
+                        initPages();
+                        sidebarButton.attr("title", langs.toggle_sidebar_label);
+                        searchButton.attr("title", langs["find_input.placeholder"]);
+                        prevButton.attr("title", langs["previous.title"]);
+                        nextButton.attr("title", langs["next.title"]);
+                        zoomOutButton.attr("title", langs.zoom_out_label);
+                        zoomInButton.attr("title", langs.zoom_in_label);
+                        $("#" + ZOOM_LEVELS.auto.id).text(langs.page_scale_auto);
+                        $("#" + ZOOM_LEVELS.actual.id).text(langs.page_scale_actual);
+                        $("#" + ZOOM_LEVELS.fit.id).text(langs.page_scale_fit);
+                        $("#" + ZOOM_LEVELS.width.id).text(langs.page_scale_width);
+                        $("#separator").text(langs.of_pages.replace("{{pagesCount}}", ""));
+                        openFullScreenBtn.attr("title", langs.presentation_mode_label);
+                        downloadButton.attr("title", langs.download_label);
+                        printButton.attr("title", langs.print_label);
+                        toolButton.attr("title", langs.tools_label);
+                        toolFirstPage.find("span").text(langs.first_page_label);
+                        toolLastPage.find("span").text(langs.last_page_label);
+                        toolRotateRight.find("span").text(langs.page_rotate_cw_label);
+                        toolRotateLeft.find("span").text(langs.page_rotate_ccw_label);
+                        toolPresenter.find("span").text(langs.presentation_mode_label);
+                        toolDownload.find("span").text(langs.download_label);
+                        toolPrint.find("span").text(langs.print_label);
+                        toolDocInfo.find("span").text(langs.document_properties_label);
+                        docInfoName.find("th").text(langs.document_properties_file_name);
+                        docInfoSize.find("th").text(langs.document_properties_file_size);
+                        docInfoTitle.find("th").text(langs.document_properties_title);
+                        docInfoAuthor.find("th").text(langs.document_properties_author);
+                        docInfoCategory.find("th").text(langs.document_properties_subject);
+                        docInfoKeywords.find("th").text(langs.document_properties_keywords);
+                        docInfoCreatedAt.find("th").text(langs.document_properties_creation_date);
+                        docInfoUpdatedAt.find("th").text(langs.document_properties_modification_date);
+                        docInfoPdfViewerVersion.find("th").text(langs.document_properties_producer);
+                        docInfoPdfVersion.find("th").text(langs.document_properties_version);
+                        docInfoTotalPages.find("th").text(langs.document_properties_page_count);
+                        docInfoHeading.text(langs.document_properties_label);
                     }
                 })
                 .catch((err) => {
@@ -331,7 +460,7 @@
         }
 
         // Init pdf pages
-        function initPages(langs) {
+        function initPages() {
             const lastOption = `<option style="display: none;" value="" id="${ZOOM_OPTION_PSUEDO}"></option>`;
             Object.values(ZOOM_LEVELS).forEach((level, index) => {
                 const id = level.id || "zoom-level-" + index;
@@ -501,7 +630,7 @@
                 },
                 xhr: function() {
                     let xhr = new XMLHttpRequest();
-                    xhr.responseType = 'blob'
+                    xhr.responseType = "blob";
                     return xhr;
                 },
                 success: function(response) {
@@ -514,6 +643,9 @@
                     downloadButton.click(function() {
                         downloadFile(path);
                     });
+                    toolDownload.click(function() {
+                        downloadFile(path);
+                    });
                 },
                 error: function(xhr, status, error) {
                     alert("Something wrong, please try again later");
@@ -523,7 +655,7 @@
 
         // Request enter pdf password
         function requestPassword(restrictions, retry = 0) {
-            let value = window.prompt(retry === 0 ? "Enter the password to open PDF file" : "Wrong password, enter the password to open PDF file");
+            let value = window.prompt(retry === 0 ? langs.password_label : langs.password_invalid);
             if (value && value === restrictions.ppw) {
                 requestPDF("/", restrictions.ppw);
                 initialState.isRequestingPassword = false;
@@ -536,7 +668,7 @@
         }
 
         // Download file
-        function downloadFile(path, fileName = "documentation.pdf") {
+        function downloadFile(path, fileName = initialState.info.name) {
             const link = document.createElement('a');
             link.href = path;
             link.download = fileName;
@@ -547,12 +679,15 @@
 
         // Main flow
         if (restrictions) {
-            if (restrictions.ppw === "") {
-                requestPDF("/");
-            } else {
-                initialState.isRequestingPassword = true;
-                requestPassword(restrictions);
-            }
+            getI18n().then(languages => {
+                langs = languages;
+                if (restrictions.ppw === "") {
+                    requestPDF("/");
+                } else {
+                    initialState.isRequestingPassword = true;
+                    requestPassword(restrictions);
+                }
+            })
         }
     });
 </script>

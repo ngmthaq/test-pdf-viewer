@@ -4,6 +4,7 @@
 
   /* Element Width */
   --mini-pdf-container-width: 200px;
+
   /* Color */
   --header-bg-color: #38383d;
   --btn-main-color: rgba(249, 249, 250, 1);
@@ -230,21 +231,29 @@ body::-webkit-scrollbar {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all .1s ease-in-out;
+  transition: all .2s ease-in-out;
 }
 
 .focus-btn:hover, .hover-btn:hover {
-  background-color: var(--button-hover-bg-color);
+  background-color: hsla(0, 0%, 0%, .1);
+  box-shadow: 0 1px 0 hsla(0, 0%, 100%, .05) inset, 0 0 1px hsla(0, 0%, 100%, .15) inset, 0 0 1px hsla(0, 0%, 0%, .05);
+  border-color: hsla(0, 0%, 0%, .32) hsla(0, 0%, 0%, .38) hsla(0, 0%, 0%, .42);
+  border-left-color: transparent;
 }
 
 .focus-btn.active {
-  background-color: var(--button-hover-bg-color);
+  background-color: hsla(0, 0%, 0%, .2);
+  box-shadow: 0 1px 0 hsla(0, 0%, 100%, .05) inset, 0 0 1px hsla(0, 0%, 100%, .15) inset, 0 0 1px hsla(0, 0%, 0%, .05);
+  border-color: hsla(0, 0%, 0%, .32) hsla(0, 0%, 0%, .38) hsla(0, 0%, 0%, .42);
+  border-left-color: transparent;
 }
 
 .focus-btn.disabled, .hover-btn.disabled {
   cursor: default !important;
   color: var(--btn-disabled-color) !important;
   background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 
@@ -261,4 +270,62 @@ body::-webkit-scrollbar {
   justify-content: center;
   background: rgba(102, 102, 103, 0.5);
   z-index: 1;
+}
+
+/* Tools drawer */
+
+#tools-drawer {
+  position: fixed;
+  top: var(--controller-height);
+  right: -500px;
+  width: 300px;
+  height: calc(100vh - var(--controller-height));
+  background-color: var(--header-bg-color);
+  overflow-y: scroll;
+  transition: all .2s linear;
+}
+
+#tools-drawer.open {
+  right: 0;
+}
+
+#tools-drawer::-webkit-scrollbar {
+  width: 0;
+}
+
+#tools-drawer .tool {
+  padding: 16px;
+  background-color: #38383d;
+  color: aliceblue;
+  cursor: pointer;
+  user-select: none;
+  transition: all .1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+#tools-drawer .tool:hover {
+  background-color: #1e1e1e;
+}
+
+#tools-drawer .tool span {
+  display: inline-block;
+  margin-left: 16px;
+}
+
+@media only screen and (max-width: 600px) {
+  #tools-drawer {
+    width: 100vw;
+  }
+}
+
+/* Modal */
+
+.custom-modal-content {
+  border-radius: 4px;
+}
+
+.custom-modal-content .modal-header {
+  padding: 8px 16px;
 }
