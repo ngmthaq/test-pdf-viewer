@@ -12,6 +12,7 @@ const MINI_CANVAS_ID_TEMPLATE = "mini-pdf-viewer-:id";
 const MINI_PDF_WRAPPER_CLASS = "mini-pdf-wrapper";
 const CONTAINER_ID_TEMPLATE = "pdf-container-:id";
 const CANVAS_CLASS = "canvas-layer";
+const CANVAS_WRAPPER_CLASS = "canvas-wrapper";
 const CANVAS_MARGIN = 8;
 
 // CSS Unit

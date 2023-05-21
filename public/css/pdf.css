@@ -217,6 +217,13 @@ body::-webkit-scrollbar {
   display: block;
 }
 
+.canvas-wrapper {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* End PDF Container */
 
 .focus-btn, .hover-btn {

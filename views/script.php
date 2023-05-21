@@ -14,6 +14,8 @@
             minScale: 0.25,
             maxScale: 5,
             viewMode: VIEW_MODES.vertical.value,
+            curentRotate: 0,
+            rotate: 90,
             viewport: {
                 width: 0,
                 height: 0
@@ -379,6 +381,18 @@
             });
         })
 
+        // Rotate right
+        toolRotateRight.click(function() {
+            initialState.curentRotate += initialState.rotate;
+            $("." + CANVAS_WRAPPER_CLASS).css("transform", `rotate(${initialState.curentRotate}deg)`);
+        })
+
+        // Rotate left
+        toolRotateLeft.click(function() {
+            initialState.curentRotate -= initialState.rotate;
+            $("." + CANVAS_WRAPPER_CLASS).css("transform", `rotate(${initialState.curentRotate}deg)`);
+        })
+
         // Open document info modal
         toolDocInfo.click(function() {
             console.log(initialState.info);
@@ -492,11 +506,11 @@
                     canvas.addClass(CANVAS_CLASS);
                     elements.height = viewport.height;
                     elements.width = viewport.width;
-                    elements.style.margin = "0 auto";
+                    // elements.style.margin = "0 auto";
                     elements.style.marginTop = CANVAS_MARGIN + "px";
                     elements.style.marginBottom = CANVAS_MARGIN + "px";
                     elements.id = CANVAS_ID_TEMPLATE.replace(":id", i);
-                    wrapper.style.width = "100%";
+                    wrapper.classList.add(CANVAS_WRAPPER_CLASS);
                     wrapper.append(elements);
                     wrapper.addEventListener("mouseover", function() {
                         initialState.currentPage = i;
@@ -533,14 +547,14 @@
                     canvas.addClass(CANVAS_CLASS);
                     elements.height = viewport.height;
                     elements.width = viewport.width;
-                    elements.style.margin = "0 auto";
+                    // elements.style.margin = "0 auto";
                     elements.style.marginTop = CANVAS_MARGIN + "px";
                     elements.style.marginBottom = CANVAS_MARGIN + "px";
                     elements.id = MINI_CANVAS_ID_TEMPLATE.replace(":id", i);
                     wrapper.setAttribute("data-id", i);
                     wrapper.className = "d-flex justify-content-center align-items-center " + MINI_PDF_WRAPPER_CLASS;
                     if (i === 1) wrapper.className += " active";
-                    wrapper.style.width = "100%";
+                    wrapper.classList.add(CANVAS_WRAPPER_CLASS);
                     wrapper.setAttribute("title", langs.page_landmark.replace("{{page}}", i));
                     wrapper.append(elements);
                     wrapper.onclick = function(e) {
