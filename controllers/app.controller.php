@@ -16,17 +16,18 @@ class App
     public function run()
     {
         if (array_key_exists("pdf", $this->get)) {
-            echo $this->pdf->getContent("http://localhost:8082/pdf.php");
+            echo $this->pdf->getContent();
         } else {
             $default_restrictions = json_encode(array("ppw" => "", "alf" => ""));
-            $restrictions = $this->pdf->getRestrictions("http://localhost:8082/") ?? $default_restrictions;
-            header('Content-Type: text/html; charset=utf-8');
+            $restrictions = $this->pdf->getRestrictions();
+            if (!$restrictions) $restrictions = $default_restrictions;
             $this->render("view.php", compact("restrictions"));
         }
     }
 
     protected function render(string $path, array $variables = [])
     {
+        header('Content-Type: text/html; charset=utf-8');
         extract($variables);
         include VIEW_DIR . DIRECTORY_SEPARATOR . $path;
     }
