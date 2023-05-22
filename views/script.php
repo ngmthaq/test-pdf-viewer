@@ -442,7 +442,6 @@
 
         // Open document info modal
         toolDocInfo.click(function() {
-            console.log(initialState.info);
             docInfoName.find("td").text(initialState.info.name);
             docInfoSize.find("td").text(initialState.info.size + " byte");
             docInfoTitle.find("td").text(initialState.info.title);

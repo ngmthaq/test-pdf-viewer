@@ -34,6 +34,6 @@ class PDF
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
         $content = curl_exec($curl);
         curl_close($curl);
-        echo $content;
+        return $content;
     }
 }
