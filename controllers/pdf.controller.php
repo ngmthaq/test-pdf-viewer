@@ -1,7 +1,9 @@
 <?php
 
-class PDF
+class PDFController
 {
+    const DEFAULT_RESTRICTIONS = ["ppw" => "apple", "alf" => ""];
+
     protected array $get;
     protected array $post;
 
@@ -24,6 +26,7 @@ class PDF
     {
         header('Content-Type: application/json; charset=utf-8');
         $file = $this->getFileContent("http://localhost:8082/pdf.php");
+        if (!$file) $file = json_encode(self::DEFAULT_RESTRICTIONS);
         return $file;
     }
 

@@ -11,5 +11,5 @@ require_once "./helpers.php";
 require_once "./controllers/app.controller.php";
 require_once "./controllers/pdf.controller.php";
 
-$app = new App();
+$app = new AppController();
 $app->run();

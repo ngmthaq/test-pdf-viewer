@@ -1,8 +1,11 @@
 <?php
 
-class App
+class AppController
 {
-    protected PDF $pdf;
+    const CIPHER_ALGO = "aes-256-cbc";
+    const CIPHER_IV_BYTES = 16;
+
+    protected PDFController $pdf;
     protected array $get;
     protected array $post;
 
@@ -10,7 +13,7 @@ class App
     {
         $this->get = $this->prepare($_GET);
         $this->post = $this->prepare($_POST);
-        $this->pdf = new PDF($this->get, $this->post);
+        $this->pdf = new PDFController($this->get, $this->post);
     }
 
     public function run()
@@ -18,11 +21,27 @@ class App
         if (array_key_exists("pdf", $this->get)) {
             echo $this->pdf->getContent();
         } else {
-            $default_restrictions = json_encode(array("ppw" => "", "alf" => ""));
-            $restrictions = $this->pdf->getRestrictions();
-            if (!$restrictions) $restrictions = $default_restrictions;
+            $raw_restrictions = $this->pdf->getRestrictions();
+            $array_restrictions = json_decode($raw_restrictions, true);
+            $plain_password = $array_restrictions["ppw"];
+            $encrypted_data = $this->decrypt($plain_password);
+            $restrictions = json_encode(["ppw" => $encrypted_data['encrypted'], "iv" => $encrypted_data['iv'], "alf" => $plain_password]);
             $this->render("view.php", compact("restrictions"));
         }
+    }
+
+    protected function decrypt($plain_string)
+    {
+        $cipher_algo = self::CIPHER_ALGO;
+        $passphrase = session_id();
+        $option = 0;
+        $iv = strtoupper(bin2hex(openssl_random_pseudo_bytes(self::CIPHER_IV_BYTES / 2)));
+        $iv = str_split($iv);
+        $iv[8] = "-";
+        $iv[13] = "-";
+        $iv = implode("", $iv);
+        $encrypted = openssl_encrypt($plain_string, $cipher_algo, $passphrase, $option, $iv);
+        return ["encrypted" => $encrypted, "iv" => $iv];
     }
 
     protected function render(string $path, array $variables = [])

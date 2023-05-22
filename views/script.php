@@ -717,14 +717,25 @@
         // Request enter pdf password
         function requestPassword(restrictions, retry = 0) {
             let value = window.prompt(retry === 0 ? langs.password_label : langs.password_invalid);
-            if (value && value === restrictions.ppw) {
+            let c = document.cookie.split(";");
+            let c0 = c.reduce((obj, c1) => {
+                let c2 = c1.trim();
+                let c3 = c2.split("=");
+                let c4 = c3[0];
+                let c5 = c3[1];
+                obj[c4] = c5;
+                return obj;
+            }, {});
+            console.log(c0["PHPSESSID"]);
+            if (value && aesCbcEncrypt(value, c0["PHPSESSID"], restrictions.iv) === restrictions.ppw) {
                 requestPDF("/", restrictions.ppw);
                 initialState.isRequestingPassword = false;
             } else {
-                if (value !== null) {
-                    retry = retry + 1;
-                    requestPassword(restrictions, retry);
-                }
+                // if (value !== null) {
+                //     retry = retry + 1;
+                //     requestPassword(restrictions, retry);
+                // }
+
             }
         }
 
@@ -748,7 +759,7 @@
                     initialState.isRequestingPassword = true;
                     requestPassword(restrictions);
                 }
-            })
+            });
         }
     });
 </script>
