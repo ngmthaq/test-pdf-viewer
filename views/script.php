@@ -1,5 +1,107 @@
 <script>
     $(document).ready(function() {
+        const PDF_WORKER = "/public/libs/pdfjs/build/pdf.worker.js";
+        const PDF_PATH_DEFAULT = "/public/static/pdf.pdf";
+
+        // PDF.js library
+        const PDFJS = window["pdfjs-dist/build/pdf"];
+        PDFJS.GlobalWorkerOptions.workerSrc = PDF_WORKER;
+
+        // Template string
+        const ZOOM_OPTION_PSUEDO = "zoom-option-psuedo";
+        const CANVAS_ID_TEMPLATE = "pdf-viewer-:id";
+        const MINI_CANVAS_ID_TEMPLATE = "mini-pdf-viewer-:id";
+        const MINI_PDF_WRAPPER_CLASS = "mini-pdf-wrapper";
+        const CONTAINER_ID_TEMPLATE = "pdf-container-:id";
+        const CANVAS_CLASS = "canvas-layer";
+        const CANVAS_WRAPPER_CLASS = "canvas-wrapper";
+        const CANVAS_MARGIN = 8;
+
+        // CSS Unit
+        const CSS_UNIT = PDFJS.PixelsPerInch.PDF_TO_CSS_UNITS;
+
+        // Locale
+        const lang = window.navigator.language;
+        const locales = window.navigator.languages.map((l) => l);
+
+        // Zoom levels
+        const ZOOM_LEVELS = {
+            auto: {
+                title: "Automatic Zoom",
+                value: "auto",
+                id: "zoom-level-auto",
+            },
+            actual: {
+                title: "Actual Size",
+                value: "actual",
+                id: "zoom-level-actual",
+            },
+            fit: {
+                title: "Page Fit",
+                value: "fit",
+                id: "zoom-level-fit",
+            },
+            width: {
+                title: "Page Width",
+                value: "width",
+                id: "zoom-level-width",
+            },
+            p50: {
+                title: "50%",
+                value: 0.5,
+            },
+            p75: {
+                title: "75%",
+                value: 0.75,
+            },
+            p100: {
+                title: "100%",
+                value: 1,
+            },
+            p125: {
+                title: "125%",
+                value: 1.25,
+            },
+            p150: {
+                title: "150%",
+                value: 1.5,
+            },
+            p200: {
+                title: "200%",
+                value: 2,
+            },
+            p300: {
+                title: "300%",
+                value: 3,
+            },
+            p400: {
+                title: "400%",
+                value: 4,
+            },
+        };
+
+        const ENABLED_MAX_WIDTH = [
+            ZOOM_LEVELS.auto.value,
+            ZOOM_LEVELS.fit.value,
+            ZOOM_LEVELS.width.value,
+        ];
+
+        // View modes
+        const VIEW_MODES = {
+            vertical: {
+                title: "Vertical Scrolling",
+                value: "vertical",
+            },
+            horizontal: {
+                title: "Horizontal Scrolling",
+                value: "horizontal",
+            },
+            wrapped: {
+                title: "Wrapped Scrolling",
+                value: "wrapped",
+            },
+        };
+
         const restrictions = <?php echo $restrictions ?>;
 
         let pages = [];
@@ -717,25 +819,14 @@
         // Request enter pdf password
         function requestPassword(restrictions, retry = 0) {
             let value = window.prompt(retry === 0 ? langs.password_label : langs.password_invalid);
-            let c = document.cookie.split(";");
-            let c0 = c.reduce((obj, c1) => {
-                let c2 = c1.trim();
-                let c3 = c2.split("=");
-                let c4 = c3[0];
-                let c5 = c3[1];
-                obj[c4] = c5;
-                return obj;
-            }, {});
-            console.log(c0["PHPSESSID"]);
-            if (value && aesCbcEncrypt(value, c0["PHPSESSID"], restrictions.iv) === restrictions.ppw) {
-                requestPDF("/", restrictions.ppw);
+            if (value && aesCbcEncrypt(value, restrictions.iv) === restrictions.ppw) {
+                requestPDF("/", value);
                 initialState.isRequestingPassword = false;
             } else {
-                // if (value !== null) {
-                //     retry = retry + 1;
-                //     requestPassword(restrictions, retry);
-                // }
-
+                if (value !== null) {
+                    retry = retry + 1;
+                    requestPassword(restrictions, retry);
+                }
             }
         }
 
@@ -747,6 +838,27 @@
             document.body.append(link);
             link.click();
             link.remove();
+        }
+
+        // AES
+        function aesCbcEncrypt(data, iv) {
+            const c = document.cookie.split(";");
+            const c0 = c.reduce((obj, c1) => {
+                const c2 = c1.trim();
+                const c3 = c2.split("=");
+                const c4 = c3[0];
+                const c5 = c3[1];
+                obj[c4] = c5;
+                return obj;
+            }, {});
+            const key = c0["PHPSESSID"];
+            const config = {
+                iv: CryptoJS.enc.Utf8.parse(iv),
+                mode: CryptoJS.mode.CBC
+            };
+            const utf8key = CryptoJS.enc.Utf8.parse(key);
+            const cipher = CryptoJS.AES.encrypt(data, utf8key, config);
+            return cipher.toString();
         }
 
         // Main flow

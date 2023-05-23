@@ -8,8 +8,8 @@
     <link rel="shortcut icon" href="<?php assets('img/favicon.ico') ?>" type="image/x-icon">
     <link rel="stylesheet" href="<?php assets('libs/bootstrap/css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?php assets('libs/icons/font/bootstrap-icons.min.css') ?>">
-    <link rel="stylesheet" href="<?php assets('css/pdf.css') ?>">
     <title>PDF</title>
+    <?php include(ROOT_DIR . "\\views\\style.php") ?>
 </head>
 
 <body>
@@ -176,11 +176,7 @@
     <script src="<?php assets('libs/bootstrap/js/bootstrap.min.js') ?>"></script>
     <script src="<?php assets('libs/pdfjs/build/pdf.js') ?>"></script>
     <script src="<?php assets('libs/crypto/crypto-js.js') ?>"></script>
-    <script src="<?php assets('js/hash.js') ?>"></script>
-    <script src="<?php assets('js/pdf.js') ?>"></script>
-
     <?php include(ROOT_DIR . "\\views\\script.php") ?>
-
 </body>
 
 </html>

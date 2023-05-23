@@ -2,7 +2,7 @@
 
 class PDFController
 {
-    const DEFAULT_RESTRICTIONS = ["ppw" => "apple", "alf" => ""];
+    const DEFAULT_RESTRICTIONS = ["ppw" => "", "alf" => ""];
 
     protected array $get;
     protected array $post;
@@ -25,7 +25,7 @@ class PDFController
     public function getRestrictions()
     {
         header('Content-Type: application/json; charset=utf-8');
-        $file = $this->getFileContent("http://localhost:8082/pdf.php");
+        $file = $this->getFileContent("http://localhost:8082/index.php");
         if (!$file) $file = json_encode(self::DEFAULT_RESTRICTIONS);
         return $file;
     }

@@ -25,23 +25,32 @@ class AppController
             $array_restrictions = json_decode($raw_restrictions, true);
             $plain_password = $array_restrictions["ppw"];
             $encrypted_data = $this->decrypt($plain_password);
-            $restrictions = json_encode(["ppw" => $encrypted_data['encrypted'], "iv" => $encrypted_data['iv'], "alf" => $plain_password]);
+            $restrictions = json_encode(["ppw" => $encrypted_data['encrypted'], "iv" => $encrypted_data['iv'], "alf" => ""]);
             $this->render("view.php", compact("restrictions"));
         }
     }
 
     protected function decrypt($plain_string)
     {
-        $cipher_algo = self::CIPHER_ALGO;
-        $passphrase = session_id();
-        $option = 0;
-        $iv = strtoupper(bin2hex(openssl_random_pseudo_bytes(self::CIPHER_IV_BYTES / 2)));
-        $iv = str_split($iv);
-        $iv[8] = "-";
-        $iv[13] = "-";
-        $iv = implode("", $iv);
-        $encrypted = openssl_encrypt($plain_string, $cipher_algo, $passphrase, $option, $iv);
-        return ["encrypted" => $encrypted, "iv" => $iv];
+        if ($plain_string === "") {
+            $output = ["encrypted" => "", "iv" => ""];
+        } else {
+            $cipher_algo = self::CIPHER_ALGO;
+            $iv = $this->getInitializationVector();
+            $passphrase = session_id();
+            $option = 0;
+            $encrypted = openssl_encrypt($plain_string, $cipher_algo, $passphrase, $option, $iv);
+            $output = ["encrypted" => $encrypted, "iv" => $iv];
+        }
+        return $output;
+    }
+
+    protected function getInitializationVector()
+    {
+        $iv1 = bin2hex(openssl_random_pseudo_bytes(4));
+        $iv2 = bin2hex(openssl_random_pseudo_bytes(2));
+        $iv3 = bin2hex(openssl_random_pseudo_bytes(1));
+        return strtoupper(implode("-", [$iv1, $iv2, $iv3]));
     }
 
     protected function render(string $path, array $variables = [])
