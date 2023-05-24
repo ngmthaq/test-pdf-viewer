@@ -1,11 +1,14 @@
 <?php
 
-/**
- * Generate session uuid
- */
-$session_uuid = strtoupper(vsprintf('%s%s-%s-%s-%s-%s%s', str_split(bin2hex(random_bytes(16)), 4)));
-session_id($session_uuid);
-session_start();
+if (session_status() === PHP_SESSION_DISABLED || session_status() === PHP_SESSION_NONE) {
+    $session_name = "PHPSESSID";
+    if (!array_key_exists($session_name, $_COOKIE)) {
+        $session_uuid = strtoupper(vsprintf('%s%s-%s-%s-%s-%s%s', str_split(bin2hex(random_bytes(16)), 4)));
+        session_id($session_uuid);
+    }
+    session_name($session_name);
+    session_start();
+}
 
 /**
  * Define constants

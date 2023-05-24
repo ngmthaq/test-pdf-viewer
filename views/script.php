@@ -127,7 +127,6 @@
                 height: 0
             },
             isFullscreen: false,
-            isRequestingPassword: false,
             isOpenSidebar: false,
             info: {
                 name: "document.pdf",
@@ -436,13 +435,6 @@
             }
         });
 
-        // Open request password prompt when winfow re-focus
-        window.addEventListener("focus", function(e) {
-            if (initialState.isRequestingPassword) {
-                requestPassword(restrictions);
-            }
-        })
-
         // Toggle open sidebar
         sidebarButton.click(function(e) {
             pdfContainer.toggleClass("fullwidth");
@@ -558,10 +550,10 @@
         })
 
         // Initial pdf.js
-        function render(path, password = "") {
+        function render(path, ppw = "") {
             const LOADING_TASK = PDFJS.getDocument(path);
             LOADING_TASK.onPassword = function(callback, reason) {
-                callback(password);
+                callback(aesCbcDecrypt(ppw, restrictions.iv));
             }
             LOADING_TASK.promise
                 .then((doc) => {
@@ -783,7 +775,7 @@
         }
 
         // Request get PDF
-        function requestPDF(path, password = "") {
+        function requestPDF(path, ppw = "") {
             loading.css("display", "flex");
             $.ajax({
                 type: "get",
@@ -801,7 +793,7 @@
                     if (response.size > 0) {
                         path = window.URL.createObjectURL(response);
                     }
-                    render(path, password)
+                    render(path, ppw)
                     loading.css("display", "none");
                     downloadButton.click(function() {
                         downloadFile(path);
@@ -816,20 +808,6 @@
             });
         }
 
-        // Request enter pdf password
-        function requestPassword(restrictions, retry = 0) {
-            let value = window.prompt(retry === 0 ? langs.password_label : langs.password_invalid);
-            if (value && aesCbcEncrypt(value, restrictions.iv) === restrictions.ppw) {
-                requestPDF("/", value);
-                initialState.isRequestingPassword = false;
-            } else {
-                if (value !== null) {
-                    retry = retry + 1;
-                    requestPassword(restrictions, retry);
-                }
-            }
-        }
-
         // Download file
         function downloadFile(path, fileName = initialState.info.name) {
             const link = document.createElement('a');
@@ -840,7 +818,7 @@
             link.remove();
         }
 
-        // AES
+        // AES ENC
         function aesCbcEncrypt(data, iv) {
             const c = document.cookie.split(";");
             const c0 = c.reduce((obj, c1) => {
@@ -861,17 +839,37 @@
             return cipher.toString();
         }
 
-        // Main flow
-        if (restrictions) {
-            getI18n().then(languages => {
-                langs = languages;
-                if (restrictions.ppw === "") {
-                    requestPDF("/");
-                } else {
-                    initialState.isRequestingPassword = true;
-                    requestPassword(restrictions);
-                }
-            });
+        // AES DEC
+        function aesCbcDecrypt(data, iv) {
+            const c = document.cookie.split(";");
+            const c0 = c.reduce((obj, c1) => {
+                const c2 = c1.trim();
+                const c3 = c2.split("=");
+                const c4 = c3[0];
+                const c5 = c3[1];
+                obj[c4] = c5;
+                return obj;
+            }, {});
+            const key = c0["PHPSESSID"];
+            const config = {
+                iv: CryptoJS.enc.Utf8.parse(iv),
+                mode: CryptoJS.mode.CBC
+            };
+            const utf8key = CryptoJS.enc.Utf8.parse(key);
+            const raw = CryptoJS.AES.decrypt(data, utf8key, config);
+            return raw.toString(CryptoJS.enc.Utf8);
         }
+
+        // Main flow
+        function main() {
+            if (restrictions) {
+                getI18n().then(languages => {
+                    langs = languages;
+                    requestPDF("/", restrictions.ppw);
+                });
+            }
+        }
+
+        main();
     });
 </script>
