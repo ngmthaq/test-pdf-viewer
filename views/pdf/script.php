@@ -870,6 +870,10 @@
                     $(`.${MINI_PDF_WRAPPER_CLASS}`).removeClass("active");
                     $(`.${MINI_PDF_WRAPPER_CLASS}[data-id="${initialState.currentPage}"]`).addClass("active");
                 });
+                pages.push({
+                    canvas,
+                    page
+                });
                 pdfContainer.append(wrapper);
                 page.render(renderCtx).promise.then(() => {
                     let nextPage = i + 1;
@@ -926,10 +930,6 @@
                         });
                     }
                     miniPdfContainer.append(wrapper);
-                    pages.push({
-                        canvas,
-                        page
-                    });
                     page.render(renderCtx).promise.then((data) => {
                         let nextPage = i + 1;
                         if (nextPage <= initialState.pageCount) {
