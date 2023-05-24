@@ -1,7 +1,7 @@
 <script>
     $(document).ready(function() {
         const PDF_WORKER = "/public/libs/pdfjs/build/pdf.worker.js";
-        const PDF_PATH_DEFAULT = "/public/static/pdf.pdf";
+        const PDF_PATH_DEFAULT = "/public/static/pdf4.pdf";
 
         // PDF.js library
         const PDFJS = window["pdfjs-dist/build/pdf"];
