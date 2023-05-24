@@ -277,15 +277,18 @@
 
         // Dropdown changed
         zoomDropdown.change(function() {
+            let _this = this;
             loading.css("display", "flex");
             initialState.zoom = convertZoomNumber($(this).val());
             zoomInButton.removeClass("disabled");
             zoomOutButton.removeClass("disabled");
             initialState.scaleControl = 1;
-            pages.forEach(({
-                page,
-                canvas
-            }, index) => {
+
+            function rerender(index = 0) {
+                const {
+                    canvas,
+                    page
+                } = pages[index];
                 const elements = canvas[0];
                 const ctx = elements.getContext("2d");
                 const viewport = page.getViewport({
@@ -302,23 +305,28 @@
                 };
                 elements.height = viewport.height;
                 elements.width = viewport.width;
-                if (ENABLED_MAX_WIDTH.includes($(this).val())) {
+                if (ENABLED_MAX_WIDTH.includes($(_this).val())) {
                     canvas.css("max-width", "100vw");
                 } else {
                     canvas.css("max-width", "unset");
                 }
-                page.render(renderCtx);
-                if (index + 1 === initialState.pageCount) {
-                    setTimeout(() => {
+                page.render(renderCtx).promise.then(() => {
+                    let nextIndex = index + 1;
+                    if (nextIndex < initialState.pageCount) {
+                        rerender(nextIndex);
+                    } else {
                         loading.css("display", "none");
-                    }, initialState.pageCount * 20);
-                }
-            });
+                    }
+                });
+            }
+
+            rerender();
         });
 
         // Click zoom out
         zoomOutButton.click(function() {
             if (initialState.scaleControl > initialState.minScale) {
+                let _this = this;
                 loading.css("display", "flex");
                 zoomInButton.removeClass("disabled");
                 initialState.scaleControl -= initialState.scaleStep;
@@ -326,12 +334,13 @@
                 $("#" + ZOOM_OPTION_PSUEDO).val(initialState.scaleControl);
                 $("#" + ZOOM_OPTION_PSUEDO).text(initialState.scaleControl * 100 + "%");
                 zoomDropdown.val(initialState.scaleControl);
-                initialState.scaleControl === initialState.minScale &&
-                    $(this).addClass("disabled");
-                pages.forEach(({
-                    page,
-                    canvas
-                }, index) => {
+                initialState.scaleControl === initialState.minScale && $(this).addClass("disabled");
+
+                function rerender(index = 0) {
+                    const {
+                        canvas,
+                        page
+                    } = pages[index];
                     const elements = canvas[0];
                     const ctx = elements.getContext("2d");
                     const viewport = page.getViewport({
@@ -348,24 +357,29 @@
                     };
                     elements.height = viewport.height;
                     elements.width = viewport.width;
-                    if (ENABLED_MAX_WIDTH.includes($(this).val())) {
+                    if (ENABLED_MAX_WIDTH.includes($(_this).val())) {
                         canvas.css("max-width", "100vw");
                     } else {
                         canvas.css("max-width", "unset");
                     }
-                    page.render(renderCtx);
-                    if (index + 1 === initialState.pageCount) {
-                        setTimeout(() => {
+                    page.render(renderCtx).promise.then(() => {
+                        let nextIndex = index + 1;
+                        if (nextIndex < initialState.pageCount) {
+                            rerender(nextIndex);
+                        } else {
                             loading.css("display", "none");
-                        }, initialState.pageCount * 20);
-                    }
-                });
+                        }
+                    });
+                }
+
+                rerender();
             }
         });
 
         // Click zoom in
         zoomInButton.click(function() {
             if (initialState.scaleControl < initialState.maxScale) {
+                let _this = this;
                 loading.css("display", "flex");
                 zoomOutButton.removeClass("disabled");
                 initialState.scaleControl += initialState.scaleStep;
@@ -375,10 +389,12 @@
                 zoomDropdown.val(initialState.scaleControl);
                 initialState.scaleControl === initialState.maxScale &&
                     $(this).addClass("disabled");
-                pages.forEach(({
-                    page,
-                    canvas
-                }, index) => {
+
+                function rerender(index = 0) {
+                    const {
+                        canvas,
+                        page
+                    } = pages[index];
                     const elements = canvas[0];
                     const ctx = elements.getContext("2d");
                     const viewport = page.getViewport({
@@ -395,18 +411,22 @@
                     };
                     elements.height = viewport.height;
                     elements.width = viewport.width;
-                    if (ENABLED_MAX_WIDTH.includes($(this).val())) {
+                    if (ENABLED_MAX_WIDTH.includes($(_this).val())) {
                         canvas.css("max-width", "100vw");
                     } else {
                         canvas.css("max-width", "unset");
                     }
-                    page.render(renderCtx);
-                    if (index + 1 === initialState.pageCount) {
-                        setTimeout(() => {
+                    page.render(renderCtx).promise.then(() => {
+                        let nextIndex = index + 1;
+                        if (nextIndex < initialState.pageCount) {
+                            rerender(nextIndex);
+                        } else {
                             loading.css("display", "none");
-                        }, initialState.pageCount * 20);
-                    }
-                });
+                        }
+                    });
+                }
+
+                rerender();
             }
         });
 
@@ -677,7 +697,6 @@
             zoomDropdown.html(zoomDropdown.html() + lastOption);
             renderMiniCanvas();
             renderCanvas();
-
         }
 
         // Convert text to zoom number
@@ -938,11 +957,6 @@
                     });
                 })
             })
-        }
-
-        // Re-render canvas
-        function rerenderCanvas(index = 0) {
-
         }
 
         // Main flow
