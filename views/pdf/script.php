@@ -1,9 +1,8 @@
 <script>
     $(document).ready(function() {
+        // PDF.js library
         const PDF_WORKER = "./vendors/libs/pdfjs/build/pdf.worker.js";
         const PDF_PATH_DEFAULT = "./vendors/static/pdf.pdf";
-
-        // PDF.js library
         const PDFJS = window["pdfjs-dist/build/pdf"];
         PDFJS.GlobalWorkerOptions.workerSrc = PDF_WORKER;
 
@@ -674,6 +673,9 @@
                     });
                     page.render(renderCtx);
                     pdfContainer.append(wrapper);
+                    if (i === initialState.pageCount) {
+                        loading.css("display", "none");
+                    }
                     return page;
                 }).then((page) => {
                     // Mini pdf page
@@ -714,9 +716,6 @@
                     }
                     page.render(renderCtx);
                     miniPdfContainer.append(wrapper);
-                    if (i === initialState.pageCount) {
-                        loading.css("display", "none");
-                    }
                 });
             }
         }

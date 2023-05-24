@@ -176,6 +176,8 @@
     <script src="<?php assets('libs/bootstrap/js/bootstrap.min.js') ?>"></script>
     <script src="<?php assets('libs/pdfjs/build/pdf.js') ?>"></script>
     <script src="<?php assets('libs/crypto/crypto-js.js') ?>"></script>
+    <script src="<?php assets('libs/lazy/jquery.lazy.min.js') ?>"></script>
+    <script src="<?php assets('libs/lazy/jquery.lazy.plugins.min.js') ?>"></script>
     <?php include(VIEW_DIR . "\\pdf\\script.php") ?>
 </body>
 

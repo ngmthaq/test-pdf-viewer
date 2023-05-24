@@ -29,6 +29,10 @@
         display: none;
     }
 
+    canvas {
+        background-color: yellow;
+    }
+
     #pdf-app {
         width: 100%;
     }
