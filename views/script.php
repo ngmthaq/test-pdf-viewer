@@ -1,7 +1,7 @@
 <script>
     $(document).ready(function() {
-        const PDF_WORKER = "/vendors/libs/pdfjs/build/pdf.worker.js";
-        const PDF_PATH_DEFAULT = "/vendors/static/pdf4.pdf";
+        const PDF_WORKER = "./vendors/libs/pdfjs/build/pdf.worker.js";
+        const PDF_PATH_DEFAULT = "./vendors/static/pdf.pdf";
 
         // PDF.js library
         const PDFJS = window["pdfjs-dist/build/pdf"];
@@ -552,9 +552,13 @@
         // Initial pdf.js
         function render(path, ppw = "") {
             const LOADING_TASK = PDFJS.getDocument(path);
-            LOADING_TASK.onPassword = function(callback, reason) {
-                callback(aesCbcDecrypt(ppw, restrictions.iv));
+
+            if (ppw) {
+                LOADING_TASK.onPassword = function(callback, reason) {
+                    callback(aesCbcDecrypt(ppw, restrictions.iv));
+                }
             }
+
             LOADING_TASK.promise
                 .then((doc) => {
                     initialState.pdfDoc = doc;
@@ -710,6 +714,9 @@
                     }
                     page.render(renderCtx);
                     miniPdfContainer.append(wrapper);
+                    if (i === initialState.pageCount) {
+                        loading.css("display", "none");
+                    }
                 });
             }
         }
@@ -748,7 +755,7 @@
             return new Promise((resolve, reject) => {
                 let locale = locales.shift();
                 let i18nUrlTemplate =
-                    "/vendors/libs/pdfjs/web/locale/:lang/viewer.properties";
+                    "./vendors/libs/pdfjs/web/locale/:lang/viewer.properties";
                 $.ajax({
                     type: "get",
                     url: i18nUrlTemplate.replace(":lang", locale),
@@ -794,7 +801,6 @@
                         path = window.URL.createObjectURL(response);
                     }
                     render(path, ppw)
-                    loading.css("display", "none");
                     downloadButton.click(function() {
                         downloadFile(path);
                     });
@@ -865,7 +871,7 @@
             if (restrictions) {
                 getI18n().then(languages => {
                     langs = languages;
-                    requestPDF("/", restrictions.ppw);
+                    requestPDF("./", restrictions.ppw);
                 });
             }
         }

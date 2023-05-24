@@ -10,7 +10,7 @@ class AppController
     /**
      * Default restrictions
      */
-    const DEFAULT_RESTRICTIONS = ["ppw" => "32334889a4fbae0ac81ba39afb91c34aec616481", "alf" => ""];
+    const DEFAULT_RESTRICTIONS = ["ppw" => "", "alf" => ""];
 
     /**
      * processed $_GET array
@@ -51,7 +51,7 @@ class AppController
         header("Cache-Control: public");
         header("Content-Type: application/pdf");
         header("Content-Transfer-Encoding: Binary");
-        $file = $this->curl("http://localhost:8082/pdf.php");
+        $file = $this->curl("http://localhost/pdf-js-demo-2/pdf.php");
         echo $file;
     }
 
@@ -63,7 +63,7 @@ class AppController
     protected function getRestrictions()
     {
         header("Content-Type: application/pdf");
-        $json_restrictions = $this->curl("http://localhost:8082/index.php");
+        $json_restrictions = $this->curl("http://localhost/pdf-js-demo-2/index.php");
         if (!$json_restrictions) $json_restrictions = json_encode(self::DEFAULT_RESTRICTIONS);
         return $json_restrictions;
     }
