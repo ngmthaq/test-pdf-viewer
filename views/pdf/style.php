@@ -29,10 +29,6 @@
         display: none;
     }
 
-    canvas {
-        background-color: yellow;
-    }
-
     #pdf-app {
         width: 100%;
     }
@@ -284,7 +280,7 @@
         display: none;
         align-items: center;
         justify-content: center;
-        background: rgba(102, 102, 103, 0.5);
+        background: rgba(102, 102, 103, 0.01);
         z-index: 1;
     }
 

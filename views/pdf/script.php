@@ -277,6 +277,7 @@
 
         // Dropdown changed
         zoomDropdown.change(function() {
+            loading.css("display", "flex");
             initialState.zoom = convertZoomNumber($(this).val());
             zoomInButton.removeClass("disabled");
             zoomOutButton.removeClass("disabled");
@@ -284,16 +285,20 @@
             pages.forEach(({
                 page,
                 canvas
-            }) => {
+            }, index) => {
                 const elements = canvas[0];
                 const ctx = elements.getContext("2d");
                 const viewport = page.getViewport({
                     scale: initialState.zoom,
                     rotation: initialState.curentRotate,
                 });
+                const outputScale = window.devicePixelRatio || 1;
+                const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
+                    null;
                 const renderCtx = {
                     canvasContext: ctx,
-                    viewport: viewport
+                    viewport: viewport,
+                    transform: transform,
                 };
                 elements.height = viewport.height;
                 elements.width = viewport.width;
@@ -303,12 +308,18 @@
                     canvas.css("max-width", "unset");
                 }
                 page.render(renderCtx);
+                if (index + 1 === initialState.pageCount) {
+                    setTimeout(() => {
+                        loading.css("display", "none");
+                    }, initialState.pageCount * 20);
+                }
             });
         });
 
         // Click zoom out
         zoomOutButton.click(function() {
             if (initialState.scaleControl > initialState.minScale) {
+                loading.css("display", "flex");
                 zoomInButton.removeClass("disabled");
                 initialState.scaleControl -= initialState.scaleStep;
                 initialState.zoom = initialState.scaleControl;
@@ -320,16 +331,20 @@
                 pages.forEach(({
                     page,
                     canvas
-                }) => {
+                }, index) => {
                     const elements = canvas[0];
                     const ctx = elements.getContext("2d");
                     const viewport = page.getViewport({
                         scale: initialState.zoom,
                         rotation: initialState.curentRotate,
                     });
+                    const outputScale = window.devicePixelRatio || 1;
+                    const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
+                        null;
                     const renderCtx = {
                         canvasContext: ctx,
-                        viewport: viewport
+                        viewport: viewport,
+                        transform: transform,
                     };
                     elements.height = viewport.height;
                     elements.width = viewport.width;
@@ -339,6 +354,11 @@
                         canvas.css("max-width", "unset");
                     }
                     page.render(renderCtx);
+                    if (index + 1 === initialState.pageCount) {
+                        setTimeout(() => {
+                            loading.css("display", "none");
+                        }, initialState.pageCount * 20);
+                    }
                 });
             }
         });
@@ -346,6 +366,7 @@
         // Click zoom in
         zoomInButton.click(function() {
             if (initialState.scaleControl < initialState.maxScale) {
+                loading.css("display", "flex");
                 zoomOutButton.removeClass("disabled");
                 initialState.scaleControl += initialState.scaleStep;
                 initialState.zoom = initialState.scaleControl;
@@ -357,16 +378,20 @@
                 pages.forEach(({
                     page,
                     canvas
-                }) => {
+                }, index) => {
                     const elements = canvas[0];
                     const ctx = elements.getContext("2d");
                     const viewport = page.getViewport({
                         scale: initialState.zoom,
                         rotation: initialState.curentRotate,
                     });
+                    const outputScale = window.devicePixelRatio || 1;
+                    const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
+                        null;
                     const renderCtx = {
                         canvasContext: ctx,
-                        viewport: viewport
+                        viewport: viewport,
+                        transform: transform,
                     };
                     elements.height = viewport.height;
                     elements.width = viewport.width;
@@ -376,6 +401,11 @@
                         canvas.css("max-width", "unset");
                     }
                     page.render(renderCtx);
+                    if (index + 1 === initialState.pageCount) {
+                        setTimeout(() => {
+                            loading.css("display", "none");
+                        }, initialState.pageCount * 20);
+                    }
                 });
             }
         });
@@ -479,20 +509,25 @@
 
         // Rotate right
         toolRotateRight.click(function() {
+            loading.css("display", "flex");
             initialState.curentRotate += initialState.rotate;
             pages.forEach(({
                 page,
                 canvas
-            }) => {
+            }, index) => {
                 const elements = canvas[0];
                 const ctx = elements.getContext("2d");
                 const viewport = page.getViewport({
                     scale: initialState.zoom,
                     rotation: initialState.curentRotate,
                 });
+                const outputScale = window.devicePixelRatio || 1;
+                const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
+                    null;
                 const renderCtx = {
                     canvasContext: ctx,
-                    viewport: viewport
+                    viewport: viewport,
+                    transform: transform,
                 };
                 elements.height = viewport.height;
                 elements.width = viewport.width;
@@ -502,25 +537,35 @@
                     canvas.css("max-width", "unset");
                 }
                 page.render(renderCtx);
+                if (index + 1 === initialState.pageCount) {
+                    setTimeout(() => {
+                        loading.css("display", "none");
+                    }, initialState.pageCount * 20);
+                }
             });
         })
 
         // Rotate left
         toolRotateLeft.click(function() {
+            loading.css("display", "flex");
             initialState.curentRotate -= initialState.rotate;
             pages.forEach(({
                 page,
                 canvas
-            }) => {
+            }, index) => {
                 const elements = canvas[0];
                 const ctx = elements.getContext("2d");
                 const viewport = page.getViewport({
                     scale: initialState.zoom,
                     rotation: initialState.curentRotate,
                 });
+                const outputScale = window.devicePixelRatio || 1;
+                const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
+                    null;
                 const renderCtx = {
                     canvasContext: ctx,
-                    viewport: viewport
+                    viewport: viewport,
+                    transform: transform,
                 };
                 elements.height = viewport.height;
                 elements.width = viewport.width;
@@ -530,6 +575,11 @@
                     canvas.css("max-width", "unset");
                 }
                 page.render(renderCtx);
+                if (index + 1 === initialState.pageCount) {
+                    setTimeout(() => {
+                        loading.css("display", "none");
+                    }, initialState.pageCount * 20);
+                }
             });
         })
 
@@ -642,9 +692,13 @@
                         scale: initialState.zoom,
                         rotation: initialState.curentRotate,
                     });
+                    const outputScale = window.devicePixelRatio || 1;
+                    const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
+                        null;
                     const renderCtx = {
                         canvasContext: ctx,
-                        viewport: viewport
+                        viewport: viewport,
+                        transform: transform,
                     };
                     initialState.viewport = viewport;
                     initialState.actualViewport = actualViewport;
@@ -673,9 +727,6 @@
                     });
                     page.render(renderCtx);
                     pdfContainer.append(wrapper);
-                    if (i === initialState.pageCount) {
-                        loading.css("display", "none");
-                    }
                     return page;
                 }).then((page) => {
                     // Mini pdf page
@@ -688,9 +739,13 @@
                         scale: 1,
                         rotation: initialState.curentRotate,
                     });
+                    const outputScale = window.devicePixelRatio || 1;
+                    const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
+                        null;
                     const renderCtx = {
                         canvasContext: ctx,
-                        viewport: viewport
+                        viewport: viewport,
+                        transform: transform,
                     };
                     canvas.addClass(CANVAS_CLASS);
                     elements.height = viewport.height;
@@ -716,6 +771,11 @@
                     }
                     page.render(renderCtx);
                     miniPdfContainer.append(wrapper);
+                    if (i === initialState.pageCount) {
+                        setTimeout(() => {
+                            loading.css("display", "none");
+                        }, initialState.pageCount * 20);
+                    }
                 });
             }
         }
