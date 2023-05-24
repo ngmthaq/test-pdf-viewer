@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="<?php assets('libs/bootstrap/css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?php assets('libs/icons/font/bootstrap-icons.min.css') ?>">
     <title>PDF</title>
-    <?php include(ROOT_DIR . "\\views\\style.php") ?>
+    <?php include(VIEW_DIR . "\\pdf\\style.php") ?>
 </head>
 
 <body>
@@ -176,7 +176,7 @@
     <script src="<?php assets('libs/bootstrap/js/bootstrap.min.js') ?>"></script>
     <script src="<?php assets('libs/pdfjs/build/pdf.js') ?>"></script>
     <script src="<?php assets('libs/crypto/crypto-js.js') ?>"></script>
-    <?php include(ROOT_DIR . "\\views\\script.php") ?>
+    <?php include(VIEW_DIR . "\\pdf\\script.php") ?>
 </body>
 
 </html>

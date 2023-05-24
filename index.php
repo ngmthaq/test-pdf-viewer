@@ -1,6 +1,6 @@
 <?php
 
-if (session_status() === PHP_SESSION_DISABLED || session_status() === PHP_SESSION_NONE) {
+if (!session_id()) {
     $session_name = "PHPSESSID";
     if (!array_key_exists($session_name, $_COOKIE)) {
         $session_uuid = strtoupper(vsprintf('%s%s-%s-%s-%s-%s%s', str_split(bin2hex(random_bytes(16)), 4)));
@@ -24,8 +24,8 @@ define("HELPERS_DIR", ROOT_DIR . DIRECTORY_SEPARATOR . "helpers");
  * Import needed files
  */
 require_once "./helpers/helpers.php";
-require_once "./controllers/app.controller.php";
 require_once "./models/pdf.model.php";
+require_once "./controllers/app.controller.php";
 
 /**
  * Launching application
