@@ -675,109 +675,9 @@
                 zoomDropdown.html(zoomDropdown.html() + option);
             });
             zoomDropdown.html(zoomDropdown.html() + lastOption);
+            renderMiniCanvas();
+            renderCanvas();
 
-            for (let i = initialState.currentPage; i <= initialState.pageCount; i++) {
-                initialState.pdfDoc.getPage(i).then((page) => {
-                    // Main pdf page
-                    const div = $("<div></div>");
-                    const wrapper = div[0];
-                    const canvas = $("<canvas></canvas>");
-                    const elements = canvas[0];
-                    const ctx = elements.getContext("2d");
-                    const actualViewport = page.getViewport({
-                        scale: 1,
-                        rotation: initialState.curentRotate,
-                    });
-                    const viewport = page.getViewport({
-                        scale: initialState.zoom,
-                        rotation: initialState.curentRotate,
-                    });
-                    const outputScale = window.devicePixelRatio || 1;
-                    const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
-                        null;
-                    const renderCtx = {
-                        canvasContext: ctx,
-                        viewport: viewport,
-                        transform: transform,
-                    };
-                    initialState.viewport = viewport;
-                    initialState.actualViewport = actualViewport;
-                    canvas.addClass(CANVAS_CLASS);
-                    elements.height = viewport.height;
-                    elements.width = viewport.width;
-                    elements.style.marginTop = CANVAS_MARGIN + "px";
-                    elements.style.marginBottom = CANVAS_MARGIN + "px";
-                    elements.id = CANVAS_ID_TEMPLATE.replace(":id", i);
-                    wrapper.classList.add(CANVAS_WRAPPER_CLASS);
-                    wrapper.append(elements);
-                    wrapper.addEventListener("mouseover", function() {
-                        initialState.currentPage = i;
-                        currentPageInput.val(initialState.currentPage);
-                        prevButton.removeClass("disabled");
-                        nextButton.removeClass("disabled");
-                        initialState.currentPage === 1 && prevButton.addClass("disabled");
-                        initialState.currentPage === initialState.pageCount &&
-                            nextButton.addClass("disabled");
-                        $(`.${MINI_PDF_WRAPPER_CLASS}`).removeClass("active");
-                        $(`.${MINI_PDF_WRAPPER_CLASS}[data-id="${initialState.currentPage}"]`).addClass("active");
-                    });
-                    pages.push({
-                        canvas,
-                        page
-                    });
-                    page.render(renderCtx);
-                    pdfContainer.append(wrapper);
-                    return page;
-                }).then((page) => {
-                    // Mini pdf page
-                    const div = $("<div></div>");
-                    const wrapper = div[0];
-                    const canvas = $("<canvas></canvas>");
-                    const elements = canvas[0];
-                    const ctx = elements.getContext("2d");
-                    const viewport = page.getViewport({
-                        scale: 1,
-                        rotation: initialState.curentRotate,
-                    });
-                    const outputScale = window.devicePixelRatio || 1;
-                    const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
-                        null;
-                    const renderCtx = {
-                        canvasContext: ctx,
-                        viewport: viewport,
-                        transform: transform,
-                    };
-                    canvas.addClass(CANVAS_CLASS);
-                    elements.height = viewport.height;
-                    elements.width = viewport.width;
-                    elements.style.marginTop = CANVAS_MARGIN + "px";
-                    elements.style.marginBottom = CANVAS_MARGIN + "px";
-                    elements.id = MINI_CANVAS_ID_TEMPLATE.replace(":id", i);
-                    wrapper.setAttribute("data-id", i);
-                    wrapper.className = "d-flex justify-content-center align-items-center " + MINI_PDF_WRAPPER_CLASS;
-                    if (i === 1) wrapper.className += " active";
-                    wrapper.classList.add(CANVAS_WRAPPER_CLASS);
-                    wrapper.setAttribute("title", langs.page_landmark.replace("{{page}}", i));
-                    wrapper.append(elements);
-                    wrapper.onclick = function(e) {
-                        initialState.currentPage = i
-                        $(`.${MINI_PDF_WRAPPER_CLASS}`).removeClass("active");
-                        $(`.${MINI_PDF_WRAPPER_CLASS}[data-id="${initialState.currentPage}"]`).addClass("active");
-                        currentPageInput.val(i);
-                        let el = document.getElementById(CANVAS_ID_TEMPLATE.replace(":id", i));
-                        pdfContainer[0].scrollTo({
-                            top: el.offsetTop
-                        });
-                    }
-                    page.render(renderCtx);
-                    miniPdfContainer.append(wrapper);
-                    if (i === initialState.pageCount) {
-                        setTimeout(() => {
-                            loading.css("display", "none");
-                        }, initialState.pageCount * 20);
-                    }
-                });
-            }
         }
 
         // Convert text to zoom number
@@ -923,6 +823,128 @@
             const utf8key = CryptoJS.enc.Utf8.parse(key);
             const raw = CryptoJS.AES.decrypt(data, utf8key, config);
             return raw.toString(CryptoJS.enc.Utf8);
+        }
+
+        // Render canvas
+        function renderCanvas(i = 1) {
+            initialState.pdfDoc.getPage(i).then((page) => {
+                const div = $("<div></div>");
+                const wrapper = div[0];
+                const canvas = $("<canvas></canvas>");
+                const elements = canvas[0];
+                const ctx = elements.getContext("2d");
+                const actualViewport = page.getViewport({
+                    scale: 1,
+                    rotation: initialState.curentRotate,
+                });
+                const viewport = page.getViewport({
+                    scale: initialState.zoom,
+                    rotation: initialState.curentRotate,
+                });
+                const outputScale = window.devicePixelRatio || 1;
+                const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
+                    null;
+                const renderCtx = {
+                    canvasContext: ctx,
+                    viewport: viewport,
+                    transform: transform,
+                };
+                initialState.viewport = viewport;
+                initialState.actualViewport = actualViewport;
+                canvas.addClass(CANVAS_CLASS);
+                elements.height = viewport.height;
+                elements.width = viewport.width;
+                elements.style.marginTop = CANVAS_MARGIN + "px";
+                elements.style.marginBottom = CANVAS_MARGIN + "px";
+                elements.id = CANVAS_ID_TEMPLATE.replace(":id", i);
+                wrapper.classList.add(CANVAS_WRAPPER_CLASS);
+                wrapper.append(elements);
+                wrapper.addEventListener("mouseover", function() {
+                    initialState.currentPage = i;
+                    currentPageInput.val(initialState.currentPage);
+                    prevButton.removeClass("disabled");
+                    nextButton.removeClass("disabled");
+                    initialState.currentPage === 1 && prevButton.addClass("disabled");
+                    initialState.currentPage === initialState.pageCount &&
+                        nextButton.addClass("disabled");
+                    $(`.${MINI_PDF_WRAPPER_CLASS}`).removeClass("active");
+                    $(`.${MINI_PDF_WRAPPER_CLASS}[data-id="${initialState.currentPage}"]`).addClass("active");
+                });
+                pdfContainer.append(wrapper);
+                page.render(renderCtx).promise.then(() => {
+                    console.log("current page", i);
+                    let nextPage = i + 1;
+                    if (nextPage <= initialState.pageCount) {
+                        renderCanvas(nextPage);
+                    } else {
+                        loading.css("display", "none");
+                    }
+                });
+            })
+        }
+
+        // Render mini canvas
+        function renderMiniCanvas(i = 1) {
+            return new Promise((resolve, reject) => {
+                initialState.pdfDoc.getPage(i).then((page) => {
+                    const div = $("<div></div>");
+                    const wrapper = div[0];
+                    const canvas = $("<canvas></canvas>");
+                    const elements = canvas[0];
+                    const ctx = elements.getContext("2d");
+                    const viewport = page.getViewport({
+                        scale: 1,
+                        rotation: initialState.curentRotate,
+                    });
+                    const outputScale = window.devicePixelRatio || 1;
+                    const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
+                        null;
+                    const renderCtx = {
+                        canvasContext: ctx,
+                        viewport: viewport,
+                        transform: transform,
+                    };
+                    canvas.addClass(CANVAS_CLASS);
+                    elements.height = viewport.height;
+                    elements.width = viewport.width;
+                    elements.style.marginTop = CANVAS_MARGIN + "px";
+                    elements.style.marginBottom = CANVAS_MARGIN + "px";
+                    elements.id = MINI_CANVAS_ID_TEMPLATE.replace(":id", i);
+                    wrapper.setAttribute("data-id", i);
+                    wrapper.className = "d-flex justify-content-center align-items-center " + MINI_PDF_WRAPPER_CLASS;
+                    if (i === 1) wrapper.className += " active";
+                    wrapper.classList.add(CANVAS_WRAPPER_CLASS);
+                    wrapper.setAttribute("title", langs.page_landmark.replace("{{page}}", i));
+                    wrapper.append(elements);
+                    wrapper.onclick = function(e) {
+                        initialState.currentPage = i
+                        $(`.${MINI_PDF_WRAPPER_CLASS}`).removeClass("active");
+                        $(`.${MINI_PDF_WRAPPER_CLASS}[data-id="${initialState.currentPage}"]`).addClass("active");
+                        currentPageInput.val(i);
+                        let el = document.getElementById(CANVAS_ID_TEMPLATE.replace(":id", i));
+                        pdfContainer[0].scrollTo({
+                            top: el.offsetTop
+                        });
+                    }
+                    miniPdfContainer.append(wrapper);
+                    pages.push({
+                        canvas,
+                        page
+                    });
+                    page.render(renderCtx).promise.then((data) => {
+                        console.log("current mini page", i);
+                        let nextPage = i + 1;
+                        if (nextPage <= initialState.pageCount) {
+                            renderMiniCanvas(nextPage);
+                        }
+                    });
+                })
+            })
+        }
+
+        // Re-render canvas
+        function rerenderCanvas(index = 0) {
+            
         }
 
         // Main flow
