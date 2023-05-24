@@ -64,6 +64,7 @@ class AppController
     {
         header("Content-Type: application/pdf");
         $json_restrictions = $this->curl("http://localhost:8082/index.php");
+        if (!$json_restrictions) $json_restrictions = json_encode(self::DEFAULT_RESTRICTIONS);
         return $json_restrictions;
     }
 

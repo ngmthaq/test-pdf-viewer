@@ -1,7 +1,7 @@
 <script>
     $(document).ready(function() {
-        const PDF_WORKER = "/public/libs/pdfjs/build/pdf.worker.js";
-        const PDF_PATH_DEFAULT = "/public/static/pdf4.pdf";
+        const PDF_WORKER = "/vendors/libs/pdfjs/build/pdf.worker.js";
+        const PDF_PATH_DEFAULT = "/vendors/static/pdf4.pdf";
 
         // PDF.js library
         const PDFJS = window["pdfjs-dist/build/pdf"];
@@ -756,7 +756,7 @@
             return new Promise((resolve, reject) => {
                 let locale = locales.shift();
                 let i18nUrlTemplate =
-                    "/public/libs/pdfjs/web/locale/:lang/viewer.properties";
+                    "/vendors/libs/pdfjs/web/locale/:lang/viewer.properties";
                 $.ajax({
                     type: "get",
                     url: i18nUrlTemplate.replace(":lang", locale),
