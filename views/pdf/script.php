@@ -2,7 +2,7 @@
     $(document).ready(function() {
         // PDF.js library
         const PDF_WORKER = "./vendors/libs/pdfjs/build/pdf.worker.js";
-        const PDF_PATH_DEFAULT = "./vendors/static/pdf.pdf";
+        const PDF_PATH_DEFAULT = "./vendors/static/pdf3.pdf";
         const PDFJS = window["pdfjs-dist/build/pdf"];
         PDFJS.GlobalWorkerOptions.workerSrc = PDF_WORKER;
 
@@ -872,7 +872,6 @@
                 });
                 pdfContainer.append(wrapper);
                 page.render(renderCtx).promise.then(() => {
-                    console.log("current page", i);
                     let nextPage = i + 1;
                     if (nextPage <= initialState.pageCount) {
                         renderCanvas(nextPage);
@@ -932,7 +931,6 @@
                         page
                     });
                     page.render(renderCtx).promise.then((data) => {
-                        console.log("current mini page", i);
                         let nextPage = i + 1;
                         if (nextPage <= initialState.pageCount) {
                             renderMiniCanvas(nextPage);
@@ -944,7 +942,7 @@
 
         // Re-render canvas
         function rerenderCanvas(index = 0) {
-            
+
         }
 
         // Main flow

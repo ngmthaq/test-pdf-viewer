@@ -341,4 +341,12 @@
     .custom-modal-content .modal-header {
         padding: 8px 16px;
     }
+
+    @media print {
+        .canvas-wrapper {
+            display: block;
+            visibility: visible;
+            position: relative;
+        }
+    }
 </style>
