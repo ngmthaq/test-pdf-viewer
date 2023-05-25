@@ -45,7 +45,7 @@ class PDFModel
      */
     public function getRestrictions()
     {
-        header("Content-Type: application/pdf");
+        header("Content-Type: application/json");
         $json_restrictions = json_encode(self::DEFAULT_RESTRICTIONS);
         $response = $this->curl("http://localhost/pdf-js-demo-2/index.php");
         if ($response["code"] === 200) $json_restrictions = $response["data"];

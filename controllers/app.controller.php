@@ -53,42 +53,60 @@ class AppController
     {
         $plain_password = $restrictions["ppw"];
         $encrypted_data = $this->encrypt($plain_password);
-        $encrypted_restrictions = json_encode(array("ppw" => $encrypted_data['encrypted'], "iv" => $encrypted_data['iv'], "alf" => $restrictions["alf"]));
+        $encrypted_restrictions = json_encode(array("ppw" => $encrypted_data['output'], "key" => $encrypted_data['key'], "alf" => $restrictions["alf"]));
         return $encrypted_restrictions;
     }
 
     /**
      * Encrypt string
-     * 
-     * @param array $output
      */
-    protected function encrypt($plain_string)
+    protected function encrypt($input, $key = 0, $padding = "=")
     {
-        if ($plain_string === "") {
-            $output = array("encrypted" => "", "iv" => "");
-        } else {
-            $cipher_algo = self::CIPHER_ALGO;
-            $iv = $this->getInitializationVector();
-            $passphrase = session_id();
-            $option = 0;
-            $encrypted = openssl_encrypt($plain_string, $cipher_algo, $passphrase, $option, $iv);
-            $output = array("encrypted" => $encrypted, "iv" => $iv);
+        if ($input === "") return array("output" => "", "key" => $key);
+        $text_length = strlen($input);
+        $key = $key === 0 ? rand(2, $text_length) : $key;
+        $array_text = str_split($input);
+        $rows = array();
+        for ($i = 0; $i < $key; $i++) {
+            $rows[$i] = array();
         }
-        return $output;
+        for ($i = 0; $i < $key; $i++) {
+            for ($j = 0; $j < ceil($text_length / $key); $j++) {
+                $pos = ($key * $j) + $i;
+                $rows[$i][] = isset($array_text[$pos]) ? $array_text[$pos] : $padding;
+            }
+        }
+        $ouput = implode("", array_map(function ($row) {
+            return implode("", $row);
+        }, $rows));
+        return array("output" => $ouput, "key" => $key);
     }
 
     /**
-     * Get a random initialization vector
-     * 
-     * @return string $iv
+     * Decrypt string
      */
-    protected function getInitializationVector()
+    protected function decrypt($input, $key, $padding = "=")
     {
-        $iv1 = bin2hex(openssl_random_pseudo_bytes(4));
-        $iv2 = bin2hex(openssl_random_pseudo_bytes(2));
-        $iv3 = bin2hex(openssl_random_pseudo_bytes(1));
-        $iv = strtoupper(implode("-", array($iv1, $iv2, $iv3)));
-        return $iv;
+        $text_length = strlen($input);
+        $array_text = str_split($input);
+        $columns = round($text_length / $key);
+        $rows = array();
+        $plain_rows = array();
+        for ($i = 0; $i < $key; $i++) {
+            for ($j = 0; $j < $columns; $j++) {
+                $pos = $i * $columns + $j;
+                $rows[$i][] = $array_text[$pos];
+            }
+        }
+        for ($p = 0; $p < $columns; $p++) {
+            $plain_rows[$p] = array_map(function ($row) use ($p) {
+                return $row[$p];
+            }, $rows);
+        }
+        $ouput = implode("", array_map(function ($row) {
+            return implode("", $row);
+        }, $plain_rows));
+        return str_replace($padding, "", $ouput);
     }
 
     /**

@@ -624,7 +624,7 @@
 
             if (ppw) {
                 LOADING_TASK.onPassword = function(callback, reason) {
-                    callback(aesCbcDecrypt(ppw, restrictions.iv));
+                    callback(d(ppw, restrictions.key));
                 }
             }
 
@@ -802,46 +802,30 @@
             link.remove();
         }
 
-        // AES ENC
-        function aesCbcEncrypt(data, iv) {
-            const c = document.cookie.split(";");
-            const c0 = c.reduce((obj, c1) => {
-                const c2 = c1.trim();
-                const c3 = c2.split("=");
-                const c4 = c3[0];
-                const c5 = c3[1];
-                obj[c4] = c5;
-                return obj;
-            }, {});
-            const key = c0["PHPSESSID"];
-            const config = {
-                iv: CryptoJS.enc.Utf8.parse(iv),
-                mode: CryptoJS.mode.CBC
-            };
-            const utf8key = CryptoJS.enc.Utf8.parse(key);
-            const cipher = CryptoJS.AES.encrypt(data, utf8key, config);
-            return cipher.toString();
-        }
-
-        // AES DEC
-        function aesCbcDecrypt(data, iv) {
-            const c = document.cookie.split(";");
-            const c0 = c.reduce((obj, c1) => {
-                const c2 = c1.trim();
-                const c3 = c2.split("=");
-                const c4 = c3[0];
-                const c5 = c3[1];
-                obj[c4] = c5;
-                return obj;
-            }, {});
-            const key = c0["PHPSESSID"];
-            const config = {
-                iv: CryptoJS.enc.Utf8.parse(iv),
-                mode: CryptoJS.mode.CBC
-            };
-            const utf8key = CryptoJS.enc.Utf8.parse(key);
-            const raw = CryptoJS.AES.decrypt(data, utf8key, config);
-            return raw.toString(CryptoJS.enc.Utf8);
+        // d e c r y p t
+        function d(input, key, padding = "=") {
+            if (typeof input === "string") {
+                let textLength = input.length;
+                let arrayText = input.split("");
+                let collumns = Math.round(textLength / key);
+                let rows = [];
+                let plainRows = [];
+                for (let i = 0; i < key; i++) {
+                    for (let j = 0; j < collumns; j++) {
+                        let pos = i * collumns + j;
+                        if (!rows[i]) rows[i] = [];
+                        let row = rows[i];
+                        row.push(arrayText[pos]);
+                    }
+                }
+                for (let p = 0; p < collumns; p++) {
+                    plainRows[p] = rows.map(row => {
+                        return row[p];
+                    })
+                }
+                let output = plainRows.map(row => row.join("")).join("");
+                return output.replace(/=/, "");
+            }
         }
 
         // Render canvas
