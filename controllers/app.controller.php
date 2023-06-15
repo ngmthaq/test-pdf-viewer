@@ -35,13 +35,21 @@ class AppController
     public function run()
     {
         if ($this->isGetPdf()) {
-            $binary = $this->pdf->getFile();
-            $this->sendBinary($binary);
+            $response = $this->pdf->getFile();
+            if ($response["code"] === 200) {
+                $this->sendBinary($response["data"]);
+            } else {
+                $this->sendBinary("", $response["code"]);
+            }
         } else {
-            $json_restrictions = $this->pdf->getRestrictions();
-            $array_restrictions = json_decode($json_restrictions, true);
-            $restrictions = $this->encryptRestrictions($array_restrictions);
-            $this->render("pdf/viewer.php", compact("restrictions"));
+            $response = $this->pdf->getRestrictions();
+            if ($response["code"] === 200) {
+                $array_restrictions = json_decode($response["data"], true);
+                $restrictions = $this->encryptRestrictions($array_restrictions);
+                $this->render("pdf/viewer.php", compact("restrictions"));
+            } else {
+                $this->render("errors/index.php", array(), $response["code"]);
+            }
         }
     }
 
@@ -146,10 +154,12 @@ class AppController
      * 
      * @param string $path path to view
      * @param array $variables variables pass to view
+     * @param int $status
      */
-    protected function render($path,  $variables = array())
+    protected function render($path,  $variables = array(), $status = 200)
     {
         header('Content-Type: text/html; charset=utf-8');
+        http_response_code($status);
         extract($variables);
         ob_start();
         include VIEW_DIR . DIRECTORY_SEPARATOR . $path;
@@ -157,20 +167,24 @@ class AppController
         ob_clean();
         $contents = trim(preg_replace('/(\s\s+)|(\n)|(\t)/', " ", $contents));
         echo $contents;
+        exit;
     }
 
     /**
      * Send binary back to client
      * 
      * @param mixed $binary
+     * @param int $status
      */
-    protected function sendBinary($binary)
+    protected function sendBinary($binary, $status = 200)
     {
         header('Content-Transfer-Encoding: binary');
         header('Content-type: application/pdf');
         header('Content-Disposition: attachment; filename=molfile.pdf');
         header('Content-Length: ' . strlen($binary));
+        http_response_code($status);
         echo $binary;
+        exit;
     }
 
     /**

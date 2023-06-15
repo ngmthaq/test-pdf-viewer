@@ -33,27 +33,18 @@ class PDFModel
         header("Cache-Control: public");
         header("Content-Type: application/pdf");
         header("Content-Transfer-Encoding: Binary");
-        $response = $this->curl("http://localhost/pdf-js-demo-2/pdf.php");
-        if ($response["code"] === 200) return $response["data"];
-        return "";
+        return $this->curl("http://localhost/pdf-js-demo-2/pdf.php");
     }
 
     /**
      * Handle get restrictions logic
      * 
-     * @return string JSON Restrictions
+     * @return array
      */
     public function getRestrictions()
     {
         header("Content-Type: application/json");
-        $json_restrictions = json_encode(self::DEFAULT_RESTRICTIONS);
-        $response = $this->curl("http://localhost/pdf-js-demo-2/index.php");
-
-        if ($response["code"] === 200) {
-            $json_restrictions = $response["data"];
-        }
-
-        return $json_restrictions;
+        return $this->curl("http://localhost/pdf-js-demo-2/index.php");
     }
 
     /**

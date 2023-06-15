@@ -2,7 +2,7 @@
     $(document).ready(function() {
         /** PDF.js library */
         const PDF_WORKER = "./vendors/libs/pdfjs/build/pdf.worker.js";
-        const PDF_PATH_DEFAULT = "./vendors/static/pdf2.pdf";
+        const PDF_PATH_DEFAULT = "./vendors/static/pdf.pdf";
         const PDFJS = window["pdfjs-dist/build/pdf"];
         PDFJS.GlobalWorkerOptions.workerSrc = PDF_WORKER;
 
@@ -787,7 +787,15 @@
                     });
                 },
                 error: function(xhr, status, error) {
-                    alert("Something wrong, please try again later");
+                    alert(langs.loading_error);
+                    let path = PDF_PATH_DEFAULT;
+                    render(path, ppw);
+                    downloadButton.click(function() {
+                        downloadFile(path);
+                    });
+                    toolDownload.click(function() {
+                        downloadFile(path);
+                    });
                 }
             });
         }

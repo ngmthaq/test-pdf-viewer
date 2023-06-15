@@ -8,7 +8,7 @@
     <link rel="shortcut icon" href="<?php assets('img/favicon.ico') ?>" type="image/x-icon">
     <link rel="stylesheet" href="<?php assets('libs/bootstrap/css/bootstrap.min.css') ?>">
     <link rel="stylesheet" href="<?php assets('libs/icons/font/bootstrap-icons.min.css') ?>">
-    <title>PDF</title>
+    <title>PDF Viewer</title>
     <?php include(VIEW_DIR . "\\pdf\\style.php") ?>
 </head>
 
