@@ -151,7 +151,12 @@ class AppController
     {
         header('Content-Type: text/html; charset=utf-8');
         extract($variables);
+        ob_start();
         include VIEW_DIR . DIRECTORY_SEPARATOR . $path;
+        $contents = ob_get_contents();
+        ob_clean();
+        $contents = trim(preg_replace('/(\s\s+)|(\n)|(\t)/', " ", $contents));
+        echo $contents;
     }
 
     /**
