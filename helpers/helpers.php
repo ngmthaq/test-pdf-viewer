@@ -2,7 +2,7 @@
 
 function assets(string $path)
 {
-    echo "./vendors/$path?v=" . time();
+    echo "./vendors/$path?t=" . time();
 }
 
 function dump($data)

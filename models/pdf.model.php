@@ -26,7 +26,7 @@ class PDFModel
     /**
      * Handle get the PDF file logic
      * 
-     * @return binary $file
+     * @return mixed $file
      */
     public function getFile()
     {
@@ -41,21 +41,26 @@ class PDFModel
     /**
      * Handle get restrictions logic
      * 
-     * @return string $json_restrictions
+     * @return string JSON Restrictions
      */
     public function getRestrictions()
     {
         header("Content-Type: application/json");
         $json_restrictions = json_encode(self::DEFAULT_RESTRICTIONS);
         $response = $this->curl("http://localhost/pdf-js-demo-2/index.php");
-        if ($response["code"] === 200) $json_restrictions = $response["data"];
+
+        if ($response["code"] === 200) {
+            $json_restrictions = $response["data"];
+        }
+
         return $json_restrictions;
     }
 
     /**
      * Connect and communicate to API servers.
      * 
-     * @return mixed $output | null
+     * @param string $path
+     * @return array
      */
     protected function curl($path)
     {

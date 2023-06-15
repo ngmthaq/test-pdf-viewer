@@ -34,8 +34,9 @@ class AppController
      */
     public function run()
     {
-        if (array_key_exists("pdf", $this->get)) {
-            echo $this->pdf->getFile();
+        if ($this->isGetPdf()) {
+            $binary = $this->pdf->getFile();
+            $this->sendBinary($binary);
         } else {
             $json_restrictions = $this->pdf->getRestrictions();
             $array_restrictions = json_decode($json_restrictions, true);
@@ -45,45 +46,72 @@ class AppController
     }
 
     /**
+     * Check is get pdf file
+     * 
+     * @return bool
+     */
+    protected function isGetPdf()
+    {
+        return array_key_exists("pdf", $this->get);
+    }
+
+    /**
      * Encrypt Restrictions
      * 
-     * @param array $encrypted_restrictions
+     * @param array $restrictions
+     * @return string $encrypted_restrictions - json string
      */
     protected function encryptRestrictions($restrictions)
     {
         $plain_password = $restrictions["ppw"];
         $encrypted_data = $this->encrypt($plain_password);
         $encrypted_restrictions = json_encode(array("ppw" => $encrypted_data['output'], "key" => $encrypted_data['key'], "alf" => $restrictions["alf"]));
+
         return $encrypted_restrictions;
     }
 
     /**
      * Encrypt string
+     * 
+     * @param string $input
+     * @param int $key
+     * @param string $padding
+     * @return array
      */
     protected function encrypt($input, $key = 0, $padding = "=")
     {
         if ($input === "") return array("output" => "", "key" => $key);
+
         $text_length = strlen($input);
         $key = $key === 0 ? rand(2, $text_length) : $key;
         $array_text = str_split($input);
         $rows = array();
+
         for ($i = 0; $i < $key; $i++) {
             $rows[$i] = array();
         }
+
         for ($i = 0; $i < $key; $i++) {
             for ($j = 0; $j < ceil($text_length / $key); $j++) {
                 $pos = ($key * $j) + $i;
                 $rows[$i][] = isset($array_text[$pos]) ? $array_text[$pos] : $padding;
             }
         }
+
         $ouput = implode("", array_map(function ($row) {
             return implode("", $row);
         }, $rows));
+
         return array("output" => $ouput, "key" => $key);
     }
 
     /**
      * Decrypt string
+     * 
+     * @param string $input
+     * @param int $key
+     * @param string $padding
+     * @return string
      */
     protected function decrypt($input, $key, $padding = "=")
     {
@@ -92,25 +120,32 @@ class AppController
         $columns = round($text_length / $key);
         $rows = array();
         $plain_rows = array();
+
         for ($i = 0; $i < $key; $i++) {
             for ($j = 0; $j < $columns; $j++) {
                 $pos = $i * $columns + $j;
                 $rows[$i][] = $array_text[$pos];
             }
         }
+
         for ($p = 0; $p < $columns; $p++) {
             $plain_rows[$p] = array_map(function ($row) use ($p) {
                 return $row[$p];
             }, $rows);
         }
+
         $ouput = implode("", array_map(function ($row) {
             return implode("", $row);
         }, $plain_rows));
+
         return str_replace($padding, "", $ouput);
     }
 
     /**
      * Serverside rendering
+     * 
+     * @param string $path path to view
+     * @param array $variables variables pass to view
      */
     protected function render($path,  $variables = array())
     {
@@ -120,13 +155,28 @@ class AppController
     }
 
     /**
-     * Prepare request params
+     * Send binary back to client
+     * 
+     * @param mixed $binary
+     */
+    protected function sendBinary($binary)
+    {
+        header('Content-Transfer-Encoding: binary');
+        header('Content-type: application/pdf');
+        header('Content-Disposition: attachment; filename=molfile.pdf');
+        header('Content-Length: ' . strlen($binary));
+        echo $binary;
+    }
+
+    /**
+     * Prepare request params avoid XSS
      * 
      * @return array $output
      */
     protected function prepare($vars)
     {
         $output = array();
+
         foreach ($vars as $key => $value) {
             if (gettype($value) === "array") {
                 $output[$key] = $this->prepare($value);
@@ -136,6 +186,7 @@ class AppController
                 $output[$key] = $value;
             }
         }
+
         return $output;
     }
 }

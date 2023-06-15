@@ -2,7 +2,7 @@
     $(document).ready(function() {
         // PDF.js library
         const PDF_WORKER = "./vendors/libs/pdfjs/build/pdf.worker.js";
-        const PDF_PATH_DEFAULT = "./vendors/static/pdf3.pdf";
+        const PDF_PATH_DEFAULT = "./vendors/static/pdf2.pdf";
         const PDFJS = window["pdfjs-dist/build/pdf"];
         PDFJS.GlobalWorkerOptions.workerSrc = PDF_WORKER;
 
