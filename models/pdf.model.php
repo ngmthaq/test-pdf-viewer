@@ -33,7 +33,7 @@ class PDFModel
         header("Cache-Control: public");
         header("Content-Type: application/pdf");
         header("Content-Transfer-Encoding: Binary");
-        return $this->curl("http://localhost/pdf-js-demo-2/pdf.php");
+        return curl("http://localhost/pdf-js-demo-2/pdf.php");
     }
 
     /**
@@ -44,30 +44,6 @@ class PDFModel
     public function getRestrictions()
     {
         header("Content-Type: application/json");
-        return $this->curl("http://localhost/pdf-js-demo-2/index.php");
-    }
-
-    /**
-     * Connect and communicate to API servers.
-     * 
-     * @param string $path
-     * @return array
-     */
-    protected function curl($path)
-    {
-        try {
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $path);
-            curl_setopt($ch, CURLOPT_HEADER, 0);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For HTTPS
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false); // For HTTPS
-            $response = curl_exec($ch);
-            $response_code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-            return array("code" => $response_code, "data" => $response);
-        } catch (\Throwable $th) {
-            return array("code" => 500, "data" => $th->getMessage());
-        }
+        return curl("http://localhost/pdf-js-demo-2/index.php");
     }
 }
