@@ -26,7 +26,7 @@ class AppController
     {
         $this->get = prepare($_GET);
         $this->post = prepare($_POST);
-        $this->pdf = new PDFModel($this->get, $this->post);
+        $this->pdf = new PDFController($this->get, $this->post);
     }
 
     /**
@@ -45,7 +45,7 @@ class AppController
             $response = $this->pdf->getRestrictions();
             if ($response["code"] === 200) {
                 $array_restrictions = json_decode($response["data"], true);
-                $restrictions = $this->encryptRestrictions($array_restrictions);
+                $restrictions = $this->pdf->encryptRestrictions($array_restrictions);
                 return renderView("pdf/viewer.php", compact("restrictions"));
             } else {
                 return renderView("errors/index.php", array(), $response["code"]);
@@ -61,20 +61,5 @@ class AppController
     protected function isGetPdf()
     {
         return array_key_exists("pdf", $this->get);
-    }
-
-    /**
-     * Encrypt Restrictions
-     * 
-     * @param array $restrictions
-     * @return string $encrypted_restrictions - json string
-     */
-    protected function encryptRestrictions($restrictions)
-    {
-        $plain_password = $restrictions["ppw"];
-        $encrypted_data = rowFenceEncrypt($plain_password);
-        $encrypted_restrictions = json_encode(array("ppw" => $encrypted_data['output'], "key" => $encrypted_data['key'], "alf" => $restrictions["alf"]));
-
-        return $encrypted_restrictions;
     }
 }

@@ -831,7 +831,7 @@
             link.remove();
         }
 
-        /** d e c r y p t */
+        /** r o w f e n c e d e c r y p t */
         function d(input, key, padding = "=") {
             if (typeof input === "string") {
                 let textLength = input.length;
@@ -855,6 +855,27 @@
                 let output = plainRows.map(row => row.join("")).join("");
                 return output.replace(/=/, "");
             }
+        }
+
+        /** a e s c b c d e c r y p t */
+        function daes(data, iv) {
+            const c = document.cookie.split(";");
+            const c0 = c.reduce((obj, c1) => {
+                const c2 = c1.trim();
+                const c3 = c2.split("=");
+                const c4 = c3[0];
+                const c5 = c3[1];
+                obj[c4] = c5;
+                return obj;
+            }, {});
+            const key = c0["PHPSESSID"];
+            const config = {
+                iv: CryptoJS.enc.Utf8.parse(iv),
+                mode: CryptoJS.mode.CBC
+            };
+            const utf8key = CryptoJS.enc.Utf8.parse(key);
+            const raw = CryptoJS.AES.decrypt(data, utf8key, config);
+            return raw.toString(CryptoJS.enc.Utf8);
         }
 
         /** Render canvas */

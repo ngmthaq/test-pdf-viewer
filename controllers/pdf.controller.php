@@ -1,6 +1,6 @@
 <?php
 
-class PDFModel
+class PDFController
 {
     /**
      * Default restrictions
@@ -45,5 +45,20 @@ class PDFModel
     {
         header("Content-Type: application/json");
         return curl("http://localhost/pdf-js-demo-2/index.php");
+    }
+
+    /**
+     * Encrypt Restrictions
+     * 
+     * @param array $restrictions
+     * @return string $encrypted_restrictions - json string
+     */
+    public function encryptRestrictions($restrictions)
+    {
+        $plain_password = $restrictions["ppw"];
+        $encrypted_data = rowFenceEncrypt($plain_password);
+        $encrypted_restrictions = json_encode(array("ppw" => $encrypted_data['output'], "key" => $encrypted_data['key'], "alf" => $restrictions["alf"]));
+
+        return $encrypted_restrictions;
     }
 }
