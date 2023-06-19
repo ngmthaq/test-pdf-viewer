@@ -72,14 +72,14 @@ function curl($path)
 }
 
 /**
- * Encrypt string
+ * Encrypt string (Row fence cipher)
  * 
  * @param string $input
  * @param int $key
  * @param string $padding
  * @return array
  */
-function encrypt($input, $key = 0, $padding = "=")
+function rowFenceEncrypt($input, $key = 0, $padding = "=")
 {
     if ($input === "") return array("output" => "", "key" => $key);
 
@@ -107,14 +107,14 @@ function encrypt($input, $key = 0, $padding = "=")
 }
 
 /**
- * Decrypt string
+ * Decrypt string (Row fence cipher)
  * 
  * @param string $input
  * @param int $key
  * @param string $padding
  * @return string
  */
-function decrypt($input, $key, $padding = "=")
+function rowFenceDecrypt($input, $key, $padding = "=")
 {
     $text_length = strlen($input);
     $array_text = str_split($input);

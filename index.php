@@ -23,7 +23,7 @@ define("HELPERS_DIR", ROOT_DIR . DIRECTORY_SEPARATOR . "helpers");
 /**
  * Import needed files
  */
-require_once "./helpers/helpers.php";
+require_once "./helpers.php";
 require_once "./models/pdf.model.php";
 require_once "./controllers/app.controller.php";
 

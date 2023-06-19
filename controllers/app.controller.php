@@ -72,7 +72,7 @@ class AppController
     protected function encryptRestrictions($restrictions)
     {
         $plain_password = $restrictions["ppw"];
-        $encrypted_data = encrypt($plain_password);
+        $encrypted_data = rowFenceEncrypt($plain_password);
         $encrypted_restrictions = json_encode(array("ppw" => $encrypted_data['output'], "key" => $encrypted_data['key'], "alf" => $restrictions["alf"]));
 
         return $encrypted_restrictions;
