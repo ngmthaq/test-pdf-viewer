@@ -296,12 +296,9 @@
                     rotation: initialState.curentRotate,
                 });
                 const outputScale = window.devicePixelRatio || 1;
-                const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
-                    null;
                 const renderCtx = {
                     canvasContext: ctx,
                     viewport: viewport,
-                    transform: transform,
                 };
                 elements.height = viewport.height;
                 elements.width = viewport.width;
@@ -348,12 +345,9 @@
                         rotation: initialState.curentRotate,
                     });
                     const outputScale = window.devicePixelRatio || 1;
-                    const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
-                        null;
                     const renderCtx = {
                         canvasContext: ctx,
                         viewport: viewport,
-                        transform: transform,
                     };
                     elements.height = viewport.height;
                     elements.width = viewport.width;
@@ -402,12 +396,9 @@
                         rotation: initialState.curentRotate,
                     });
                     const outputScale = window.devicePixelRatio || 1;
-                    const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
-                        null;
                     const renderCtx = {
                         canvasContext: ctx,
                         viewport: viewport,
-                        transform: transform,
                     };
                     elements.height = viewport.height;
                     elements.width = viewport.width;
@@ -467,12 +458,36 @@
 
         /** Click print */
         printButton.click(function() {
-            pdfContainer.printThis();
+            pdfContainer.printThis({
+                beforePrintEvent: () => {
+                    console.log("Openned print promp");
+                    loading.css("display", "none");
+                },
+                beforePrint: () => {
+                    console.log("Open print promp");
+                    loading.css("display", "flex");
+                },
+                afterPrint: () => {
+                    console.log("Close print promp");
+                }
+            });
         });
 
         /** Click print */
         toolPrint.click(function() {
-            pdfContainer.printThis();
+            pdfContainer.printThis({
+                beforePrintEvent: () => {
+                    console.log("Openned print promp");
+                    loading.css("display", "none");
+                },
+                beforePrint: () => {
+                    console.log("Open print promp");
+                    loading.css("display", "flex");
+                },
+                afterPrint: () => {
+                    console.log("Close print promp");
+                }
+            });
         });
 
         /** Ctrl + P */
@@ -480,7 +495,19 @@
             if ((event.ctrlKey || event.metaKey) && event.keyCode === 80) {
                 event.preventDefault();
                 event.stopImmediatePropagation();
-                pdfContainer.printThis();
+                pdfContainer.printThis({
+                    beforePrintEvent: () => {
+                        console.log("Openned print promp");
+                        loading.css("display", "none");
+                    },
+                    beforePrint: () => {
+                        console.log("Open print promp");
+                        loading.css("display", "flex");
+                    },
+                    afterPrint: () => {
+                        console.log("Close print promp");
+                    }
+                });
             }
         });
 
@@ -542,12 +569,9 @@
                     rotation: initialState.curentRotate,
                 });
                 const outputScale = window.devicePixelRatio || 1;
-                const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
-                    null;
                 const renderCtx = {
                     canvasContext: ctx,
                     viewport: viewport,
-                    transform: transform,
                 };
                 elements.height = viewport.height;
                 elements.width = viewport.width;
@@ -580,12 +604,9 @@
                     rotation: initialState.curentRotate,
                 });
                 const outputScale = window.devicePixelRatio || 1;
-                const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
-                    null;
                 const renderCtx = {
                     canvasContext: ctx,
                     viewport: viewport,
-                    transform: transform,
                 };
                 elements.height = viewport.height;
                 elements.width = viewport.width;
@@ -853,12 +874,9 @@
                     rotation: initialState.curentRotate,
                 });
                 const outputScale = window.devicePixelRatio || 1;
-                const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
-                    null;
                 const renderCtx = {
                     canvasContext: ctx,
                     viewport: viewport,
-                    transform: transform,
                 };
                 initialState.viewport = viewport;
                 initialState.actualViewport = actualViewport;
@@ -911,12 +929,9 @@
                         rotation: initialState.curentRotate,
                     });
                     const outputScale = window.devicePixelRatio || 1;
-                    const transform = outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] :
-                        null;
                     const renderCtx = {
                         canvasContext: ctx,
                         viewport: viewport,
-                        transform: transform,
                     };
                     canvas.addClass(CANVAS_CLASS);
                     elements.height = viewport.height;

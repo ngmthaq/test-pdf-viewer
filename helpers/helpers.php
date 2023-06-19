@@ -158,7 +158,6 @@ function renderView($path,  $variables = array(), $status = 200)
     include VIEW_DIR . DIRECTORY_SEPARATOR . $path;
     $contents = ob_get_contents();
     ob_clean();
-    $contents = trim(preg_replace('/(\s\s+)|(\n)|(\t)/', " ", $contents));
     echo $contents;
     exit;
 }
