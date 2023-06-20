@@ -183,6 +183,7 @@
         const docInfoPdfVersion = $(document).find("#document-pdf-version");
         const docInfoTotalPages = $(document).find("#document-total-pages");
         const docInfoHeading = $(document).find("#document-info-label");
+        const overlay = $(document).find("#overlay");
 
         $("html").attr("lang", lang);
 
@@ -458,6 +459,16 @@
             docInfoPdfViewerVersion.find("td").text(initialState.info.pdfViewerVersion);
             docInfoPdfVersion.find("td").text(initialState.info.version);
             docInfoTotalPages.find("td").text(initialState.info.pages);
+        });
+
+        /** Window focus */
+        window.addEventListener("focus", function(e) {
+            overlay.css("display", "none");
+        });
+
+        /** Window blur */
+        window.addEventListener("blur", function(e) {
+            overlay.css("display", "flex");
         });
 
         /** Initial pdf.js */

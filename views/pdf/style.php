@@ -15,6 +15,10 @@
         --button-hover-bg-color: rgba(102, 102, 103, 1);
         --button-click-bg-color: rgb(93, 93, 94);
         --dropdown-bg-color: rgba(74, 74, 79, 1);
+
+        /* z-index */
+        --z-index-loading: 1;
+        --z-index-overlay: 1000;
     }
 
     * {
@@ -284,7 +288,7 @@
         align-items: center;
         justify-content: center;
         background: rgba(102, 102, 103, 0.01);
-        z-index: 1;
+        z-index: var(--z-index-loading);
     }
 
     /* Tools drawer */
@@ -343,6 +347,17 @@
 
     .custom-modal-content .modal-header {
         padding: 8px 16px;
+    }
+
+    #overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: var(--z-index-overlay);
+        display: none;
     }
 
     @media print {

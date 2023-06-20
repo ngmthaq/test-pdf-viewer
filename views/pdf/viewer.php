@@ -170,6 +170,9 @@
         </div>
     </div>
 
+    <!-- Overlay -->
+    <div id="overlay"></div>
+
     <script src="<?php assets('libs/jquery/index.min.js') ?>"></script>
     <script src="<?php assets('libs/jquery/numeric.plugin.min.js') ?>"></script>
     <script src="<?php assets('libs/jquery/print.plugin.js') ?>"></script>
