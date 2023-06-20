@@ -436,6 +436,9 @@
         toolRotateRight.click(function() {
             loading.css("display", "flex");
             initialState.curentRotate += initialState.rotate;
+            miniPdfContainer.get(0).scroll({
+                top: 0
+            });
             rotate();
         });
 
@@ -443,6 +446,9 @@
         toolRotateLeft.click(function() {
             loading.css("display", "flex");
             initialState.curentRotate -= initialState.rotate;
+            miniPdfContainer.get(0).scroll({
+                top: 0
+            });
             rotate();
         });
 
@@ -548,7 +554,6 @@
                 zoomDropdown.html(zoomDropdown.html() + option);
             });
             zoomDropdown.html(zoomDropdown.html() + lastOption);
-            renderMiniCanvas();
             renderCanvas();
         }
 
@@ -693,33 +698,37 @@
                 canvas,
                 page
             } = pages[index];
+
             const elements = canvas[0];
             const ctx = elements.getContext("2d");
             const viewport = page.getViewport({
                 scale: initialState.zoom,
                 rotation: initialState.curentRotate,
             });
+
             const outputScale = window.devicePixelRatio || 1;
             const renderCtx = {
                 canvasContext: ctx,
                 viewport: viewport,
             };
+
             elements.height = viewport.height;
             elements.width = viewport.width;
+
             if (ENABLED_MAX_WIDTH.includes(initialState.zoomString)) {
                 canvas.css("max-width", "100vw");
             } else {
                 canvas.css("max-width", "unset");
             }
+
+            rotatePreviewPage(index);
+
             page.render(renderCtx).promise.then(() => {
                 let nextIndex = index + 1;
                 if (nextIndex < initialState.pageCount) {
                     rotate(nextIndex);
                 } else {
-                    miniPdfContainer.get(0).scrollIntoView({
-                        behavior: 'smooth'
-                    });
-                    rotatePreviewPage();
+                    loading.css("display", "none");
                 }
             });
         }
@@ -730,27 +739,26 @@
                 canvas,
                 page
             } = miniPages[index];
+
             const elements = canvas[0];
             const ctx = elements.getContext("2d");
+
             const viewport = page.getViewport({
                 scale: initialState.zoom,
                 rotation: initialState.curentRotate,
             });
+
             const outputScale = window.devicePixelRatio || 1;
+
             const renderCtx = {
                 canvasContext: ctx,
                 viewport: viewport,
             };
+
             elements.height = viewport.height;
             elements.width = viewport.width;
-            page.render(renderCtx).promise.then(() => {
-                let nextIndex = index + 1;
-                if (nextIndex < initialState.pageCount) {
-                    rotatePreviewPage(nextIndex);
-                } else {
-                    loading.css("display", "none");
-                }
-            });
+
+            page.render(renderCtx);
         }
 
         /** Download file */
@@ -818,19 +826,24 @@
                 const canvas = $("<canvas></canvas>");
                 const elements = canvas[0];
                 const ctx = elements.getContext("2d");
+
                 const actualViewport = page.getViewport({
                     scale: 1,
                     rotation: initialState.curentRotate,
                 });
+
                 const viewport = page.getViewport({
                     scale: initialState.zoom,
                     rotation: initialState.curentRotate,
                 });
+
                 const outputScale = window.devicePixelRatio || 1;
+
                 const renderCtx = {
                     canvasContext: ctx,
                     viewport: viewport,
                 };
+
                 initialState.viewport = viewport;
                 initialState.actualViewport = actualViewport;
                 canvas.addClass(CANVAS_CLASS);
@@ -841,6 +854,7 @@
                 elements.id = CANVAS_ID_TEMPLATE.replace(":id", i);
                 wrapper.classList.add(CANVAS_WRAPPER_CLASS);
                 wrapper.append(elements);
+
                 wrapper.addEventListener("mouseover", function() {
                     initialState.currentPage = i;
                     currentPageInput.val(initialState.currentPage);
@@ -852,11 +866,14 @@
                     $(`.${MINI_PDF_WRAPPER_CLASS}`).removeClass("active");
                     $(`.${MINI_PDF_WRAPPER_CLASS}[data-id="${initialState.currentPage}"]`).addClass("active");
                 });
+
                 pages.push({
                     canvas,
                     page
                 });
+
                 pdfContainer.append(wrapper);
+                renderMiniCanvas(i);
                 page.render(renderCtx).promise.then(() => {
                     let nextPage = i + 1;
                     if (nextPage <= initialState.pageCount) {
@@ -877,15 +894,19 @@
                     const canvas = $("<canvas></canvas>");
                     const elements = canvas[0];
                     const ctx = elements.getContext("2d");
+
                     const viewport = page.getViewport({
                         scale: 1,
                         rotation: initialState.curentRotate,
                     });
+
                     const outputScale = window.devicePixelRatio || 1;
+
                     const renderCtx = {
                         canvasContext: ctx,
                         viewport: viewport,
                     };
+
                     canvas.addClass(CANVAS_CLASS);
                     elements.height = viewport.height;
                     elements.width = viewport.width;
@@ -894,10 +915,15 @@
                     elements.id = MINI_CANVAS_ID_TEMPLATE.replace(":id", i);
                     wrapper.setAttribute("data-id", i);
                     wrapper.className = "d-flex justify-content-center align-items-center " + MINI_PDF_WRAPPER_CLASS;
-                    if (i === 1) wrapper.className += " active";
+
+                    if (i === 1) {
+                        wrapper.className += " active";
+                    }
+
                     wrapper.classList.add(CANVAS_WRAPPER_CLASS);
                     wrapper.setAttribute("title", langs.page_landmark.replace("{{page}}", i));
                     wrapper.append(elements);
+
                     wrapper.onclick = function(e) {
                         initialState.currentPage = i;
                         $(`.${MINI_PDF_WRAPPER_CLASS}`).removeClass("active");
@@ -908,17 +934,15 @@
                             top: el.offsetTop
                         });
                     };
+
                     miniPdfContainer.append(wrapper);
+
                     miniPages.push({
                         canvas,
                         page
                     });
-                    page.render(renderCtx).promise.then((data) => {
-                        let nextPage = i + 1;
-                        if (nextPage <= initialState.pageCount) {
-                            renderMiniCanvas(nextPage);
-                        }
-                    });
+
+                    page.render(renderCtx);
                 });
             });
         }

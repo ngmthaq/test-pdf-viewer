@@ -287,7 +287,7 @@
         display: none;
         align-items: center;
         justify-content: center;
-        background: rgba(102, 102, 103, 0.01);
+        background: rgba(102, 102, 103, 0.2);
         z-index: var(--z-index-loading);
     }
 
