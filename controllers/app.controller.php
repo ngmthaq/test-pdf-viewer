@@ -3,11 +3,6 @@
 class AppController
 {
     /**
-     * Cipher algorithm used to encrypt the password
-     */
-    const CIPHER_ALGO = "aes-256-cbc";
-
-    /**
      * processed $_GET array
      */
     protected $get;
@@ -37,18 +32,18 @@ class AppController
         if ($this->isGetPdf()) {
             $response = $this->pdf->getFile();
             if ($response["code"] === 200) {
-                return $this->sendBinary($response["data"]);
+                $this->sendBinary($response["data"]);
             } else {
-                return $this->sendBinary("", $response["code"]);
+                $this->sendBinary("", $response["code"]);
             }
         } else {
             $response = $this->pdf->getRestrictions();
             if ($response["code"] === 200) {
                 $array_restrictions = json_decode($response["data"], true);
                 $restrictions = $this->pdf->encryptRestrictions($array_restrictions);
-                return $this->renderView("pdf/viewer.php", compact("restrictions"));
+                $this->renderView("pdf/viewer.php", compact("restrictions"));
             } else {
-                return $this->renderView("errors/index.php", array(), $response["code"]);
+                $this->renderView("errors/index.php", array(), $response["code"]);
             }
         }
     }
@@ -75,11 +70,7 @@ class AppController
         header('Content-Type: text/html; charset=utf-8');
         http_response_code($status);
         extract($variables);
-        ob_start();
         include VIEW_DIR . DIRECTORY_SEPARATOR . $path;
-        $contents = ob_get_contents();
-        ob_clean();
-        echo $contents;
         exit;
     }
 
@@ -108,7 +99,6 @@ class AppController
     public function prepare($vars)
     {
         $output = array();
-
         foreach ($vars as $key => $value) {
             if (gettype($value) === "array") {
                 $output[$key] = $this->prepare($value);
@@ -118,7 +108,6 @@ class AppController
                 $output[$key] = $value;
             }
         }
-
         return $output;
     }
 }

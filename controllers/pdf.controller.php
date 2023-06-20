@@ -3,6 +3,11 @@
 class PDFController
 {
     /**
+     * Cipher algorithm used to encrypt the password
+     */
+    const CIPHER_ALGO = "aes-256-cbc";
+
+    /**
      * Default restrictions
      */
     const DEFAULT_RESTRICTIONS = array("ppw" => "", "alf" => "");
@@ -58,7 +63,6 @@ class PDFController
         $plain_password = $restrictions["ppw"];
         $encrypted_data = $this->rowFenceEncrypt($plain_password);
         $encrypted_restrictions = json_encode(array("ppw" => $encrypted_data['output'], "key" => $encrypted_data['key'], "alf" => $restrictions["alf"]));
-
         return $encrypted_restrictions;
     }
 
@@ -81,11 +85,13 @@ class PDFController
             $response_info = curl_getinfo($ch);
             $response_code = (int)$response_info["http_code"];
             curl_close($ch);
+
             if ($response_code === 0) {
                 $response_array = array("code" => 500, "message" => "Cannot connect with $path!", "info" => $response_info, "data" => $response);
                 console($response_array["message"], "error");
                 return $response_array;
             }
+
             return array("code" => $response_code, "message" => null, "info" => $response_info, "data" => $response);
         } catch (\Throwable $th) {
             console($th->getMessage(), "error");
@@ -162,5 +168,38 @@ class PDFController
         }, $plain_rows));
 
         return str_replace($padding, "", $ouput);
+    }
+
+    /**
+     * Encrypt string
+     * 
+     * @param array $output
+     */
+    public function aesEncrypt($plain_string)
+    {
+        if ($plain_string === "") {
+            $output = array("encrypted" => "", "iv" => "");
+        } else {
+            $cipher_algo = self::CIPHER_ALGO;
+            $iv = $this->generateInitializationVector();
+            $passphrase = session_id();
+            $option = 0;
+            $encrypted = openssl_encrypt($plain_string, $cipher_algo, $passphrase, $option, $iv);
+            $output = array("encrypted" => $encrypted, "iv" => $iv);
+        }
+        return $output;
+    }
+
+    /**
+     * Generate 
+     * @return string
+     */
+    public function generateInitializationVector()
+    {
+        $iv1 = bin2hex(openssl_random_pseudo_bytes(4));
+        $iv2 = bin2hex(openssl_random_pseudo_bytes(2));
+        $iv3 = bin2hex(openssl_random_pseudo_bytes(1));
+        $iv = strtoupper(implode("-", array($iv1, $iv2, $iv3)));
+        return $iv;
     }
 }
