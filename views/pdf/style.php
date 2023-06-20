@@ -1,4 +1,6 @@
 <style>
+    @import url("/vendors/fonts/noto_san_jp/NotoSansJP-VariableFont_wght.ttf");
+
     :root {
         /* Element Height */
         --controller-height: 35px;
@@ -19,6 +21,7 @@
         padding: 0;
         margin: 0;
         scroll-behavior: smooth;
+        font-family: 'Noto Sans JP', sans-serif;
     }
 
     body {

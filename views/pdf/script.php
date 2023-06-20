@@ -104,12 +104,14 @@
         const restrictions = <?php echo $restrictions ?>;
 
         let pages = [];
+        let miniPages = [];
         let langs = {};
         let initialState = {
             pdfDoc: null,
             currentPage: 0,
             pageCount: 0,
             zoom: CSS_UNIT,
+            zoomString: ZOOM_LEVELS.auto.value,
             scaleControl: 1,
             scaleStep: 0.25,
             minScale: 0.25,
@@ -280,44 +282,11 @@
             let _this = this;
             loading.css("display", "flex");
             initialState.zoom = convertZoomNumber($(this).val());
+            initialState.zoomString = $(this).val();
             zoomInButton.removeClass("disabled");
             zoomOutButton.removeClass("disabled");
             initialState.scaleControl = 1;
-
-            function rerender(index = 0) {
-                const {
-                    canvas,
-                    page
-                } = pages[index];
-                const elements = canvas[0];
-                const ctx = elements.getContext("2d");
-                const viewport = page.getViewport({
-                    scale: initialState.zoom,
-                    rotation: initialState.curentRotate,
-                });
-                const outputScale = window.devicePixelRatio || 1;
-                const renderCtx = {
-                    canvasContext: ctx,
-                    viewport: viewport,
-                };
-                elements.height = viewport.height;
-                elements.width = viewport.width;
-                if (ENABLED_MAX_WIDTH.includes($(_this).val())) {
-                    canvas.css("max-width", "100vw");
-                } else {
-                    canvas.css("max-width", "unset");
-                }
-                page.render(renderCtx).promise.then(() => {
-                    let nextIndex = index + 1;
-                    if (nextIndex < initialState.pageCount) {
-                        rerender(nextIndex);
-                    } else {
-                        loading.css("display", "none");
-                    }
-                });
-            }
-
-            rerender();
+            resize(_this);
         });
 
         /** Click zoom out */
@@ -328,45 +297,12 @@
                 zoomInButton.removeClass("disabled");
                 initialState.scaleControl -= initialState.scaleStep;
                 initialState.zoom = initialState.scaleControl;
+                initialState.zoomString = initialState.scaleControl;
                 $("#" + ZOOM_OPTION_PSUEDO).val(initialState.scaleControl);
                 $("#" + ZOOM_OPTION_PSUEDO).text(initialState.scaleControl * 100 + "%");
                 zoomDropdown.val(initialState.scaleControl);
                 initialState.scaleControl === initialState.minScale && $(this).addClass("disabled");
-
-                function rerender(index = 0) {
-                    const {
-                        canvas,
-                        page
-                    } = pages[index];
-                    const elements = canvas[0];
-                    const ctx = elements.getContext("2d");
-                    const viewport = page.getViewport({
-                        scale: initialState.zoom,
-                        rotation: initialState.curentRotate,
-                    });
-                    const outputScale = window.devicePixelRatio || 1;
-                    const renderCtx = {
-                        canvasContext: ctx,
-                        viewport: viewport,
-                    };
-                    elements.height = viewport.height;
-                    elements.width = viewport.width;
-                    if (ENABLED_MAX_WIDTH.includes($(_this).val())) {
-                        canvas.css("max-width", "100vw");
-                    } else {
-                        canvas.css("max-width", "unset");
-                    }
-                    page.render(renderCtx).promise.then(() => {
-                        let nextIndex = index + 1;
-                        if (nextIndex < initialState.pageCount) {
-                            rerender(nextIndex);
-                        } else {
-                            loading.css("display", "none");
-                        }
-                    });
-                }
-
-                rerender();
+                resize(_this);
             }
         });
 
@@ -378,46 +314,12 @@
                 zoomOutButton.removeClass("disabled");
                 initialState.scaleControl += initialState.scaleStep;
                 initialState.zoom = initialState.scaleControl;
+                initialState.zoomString = initialState.scaleControl;
                 $("#" + ZOOM_OPTION_PSUEDO).val(initialState.scaleControl);
                 $("#" + ZOOM_OPTION_PSUEDO).text(initialState.scaleControl * 100 + "%");
                 zoomDropdown.val(initialState.scaleControl);
-                initialState.scaleControl === initialState.maxScale &&
-                    $(this).addClass("disabled");
-
-                function rerender(index = 0) {
-                    const {
-                        canvas,
-                        page
-                    } = pages[index];
-                    const elements = canvas[0];
-                    const ctx = elements.getContext("2d");
-                    const viewport = page.getViewport({
-                        scale: initialState.zoom,
-                        rotation: initialState.curentRotate,
-                    });
-                    const outputScale = window.devicePixelRatio || 1;
-                    const renderCtx = {
-                        canvasContext: ctx,
-                        viewport: viewport,
-                    };
-                    elements.height = viewport.height;
-                    elements.width = viewport.width;
-                    if (ENABLED_MAX_WIDTH.includes($(_this).val())) {
-                        canvas.css("max-width", "100vw");
-                    } else {
-                        canvas.css("max-width", "unset");
-                    }
-                    page.render(renderCtx).promise.then(() => {
-                        let nextIndex = index + 1;
-                        if (nextIndex < initialState.pageCount) {
-                            rerender(nextIndex);
-                        } else {
-                            loading.css("display", "none");
-                        }
-                    });
-                }
-
-                rerender();
+                initialState.scaleControl === initialState.maxScale && $(this).addClass("disabled");
+                resize(_this);
             }
         });
 
@@ -456,38 +358,25 @@
             }
         });
 
+        /** Print configs */
+        const printConfigs = {
+            beforePrintEvent: () => {
+                loading.css("display", "none");
+            },
+            beforePrint: () => {
+                loading.css("display", "flex");
+            },
+            afterPrint: () => {}
+        }
+
         /** Click print */
         printButton.click(function() {
-            pdfContainer.printThis({
-                beforePrintEvent: () => {
-                    console.log("Openned print promp");
-                    loading.css("display", "none");
-                },
-                beforePrint: () => {
-                    console.log("Open print promp");
-                    loading.css("display", "flex");
-                },
-                afterPrint: () => {
-                    console.log("Close print promp");
-                }
-            });
+            pdfContainer.printThis(printConfigs);
         });
 
         /** Click print */
         toolPrint.click(function() {
-            pdfContainer.printThis({
-                beforePrintEvent: () => {
-                    console.log("Openned print promp");
-                    loading.css("display", "none");
-                },
-                beforePrint: () => {
-                    console.log("Open print promp");
-                    loading.css("display", "flex");
-                },
-                afterPrint: () => {
-                    console.log("Close print promp");
-                }
-            });
+            pdfContainer.printThis(printConfigs);
         });
 
         /** Ctrl + P */
@@ -495,19 +384,7 @@
             if ((event.ctrlKey || event.metaKey) && event.keyCode === 80) {
                 event.preventDefault();
                 event.stopImmediatePropagation();
-                pdfContainer.printThis({
-                    beforePrintEvent: () => {
-                        console.log("Openned print promp");
-                        loading.css("display", "none");
-                    },
-                    beforePrint: () => {
-                        console.log("Open print promp");
-                        loading.css("display", "flex");
-                    },
-                    afterPrint: () => {
-                        console.log("Close print promp");
-                    }
-                });
+                pdfContainer.printThis(printConfigs);
             }
         });
 
@@ -558,70 +435,14 @@
         toolRotateRight.click(function() {
             loading.css("display", "flex");
             initialState.curentRotate += initialState.rotate;
-            pages.forEach(({
-                page,
-                canvas
-            }, index) => {
-                const elements = canvas[0];
-                const ctx = elements.getContext("2d");
-                const viewport = page.getViewport({
-                    scale: initialState.zoom,
-                    rotation: initialState.curentRotate,
-                });
-                const outputScale = window.devicePixelRatio || 1;
-                const renderCtx = {
-                    canvasContext: ctx,
-                    viewport: viewport,
-                };
-                elements.height = viewport.height;
-                elements.width = viewport.width;
-                if (ENABLED_MAX_WIDTH.includes($(this).val())) {
-                    canvas.css("max-width", "100vw");
-                } else {
-                    canvas.css("max-width", "unset");
-                }
-                page.render(renderCtx);
-                if (index + 1 === initialState.pageCount) {
-                    setTimeout(() => {
-                        loading.css("display", "none");
-                    }, initialState.pageCount * 20);
-                }
-            });
+            rotate();
         });
 
         /** Rotate left */
         toolRotateLeft.click(function() {
             loading.css("display", "flex");
             initialState.curentRotate -= initialState.rotate;
-            pages.forEach(({
-                page,
-                canvas
-            }, index) => {
-                const elements = canvas[0];
-                const ctx = elements.getContext("2d");
-                const viewport = page.getViewport({
-                    scale: initialState.zoom,
-                    rotation: initialState.curentRotate,
-                });
-                const outputScale = window.devicePixelRatio || 1;
-                const renderCtx = {
-                    canvasContext: ctx,
-                    viewport: viewport,
-                };
-                elements.height = viewport.height;
-                elements.width = viewport.width;
-                if (ENABLED_MAX_WIDTH.includes($(this).val())) {
-                    canvas.css("max-width", "100vw");
-                } else {
-                    canvas.css("max-width", "unset");
-                }
-                page.render(renderCtx);
-                if (index + 1 === initialState.pageCount) {
-                    setTimeout(() => {
-                        loading.css("display", "none");
-                    }, initialState.pageCount * 20);
-                }
-            });
+            rotate();
         });
 
         /** Open document info modal */
@@ -787,7 +608,7 @@
                 type: "get",
                 url: path,
                 data: {
-                    pdf: true
+                    rqt: "pdf"
                 },
                 xhr: function() {
                     let xhr = new XMLHttpRequest();
@@ -808,8 +629,8 @@
                     });
                 },
                 error: function(xhr, status, error) {
-                    alert(langs.loading_error);
                     let path = PDF_PATH_DEFAULT;
+                    alert(langs.loading_error);
                     render(path, ppw);
                     downloadButton.click(function() {
                         downloadFile(path);
@@ -817,6 +638,106 @@
                     toolDownload.click(function() {
                         downloadFile(path);
                     });
+                }
+            });
+        }
+
+        /** Resize */
+        function resize(_this, index = 0) {
+            const {
+                canvas,
+                page
+            } = pages[index];
+            const elements = canvas[0];
+            const ctx = elements.getContext("2d");
+            const viewport = page.getViewport({
+                scale: initialState.zoom,
+                rotation: initialState.curentRotate,
+            });
+            const outputScale = window.devicePixelRatio || 1;
+            const renderCtx = {
+                canvasContext: ctx,
+                viewport: viewport,
+            };
+            elements.height = viewport.height;
+            elements.width = viewport.width;
+            if (ENABLED_MAX_WIDTH.includes($(_this).val())) {
+                canvas.css("max-width", "100vw");
+            } else {
+                canvas.css("max-width", "unset");
+            }
+            page.render(renderCtx).promise.then(() => {
+                let nextIndex = index + 1;
+                if (nextIndex < initialState.pageCount) {
+                    resize(_this, nextIndex);
+                } else {
+                    loading.css("display", "none");
+                }
+            });
+        }
+
+        /** Rotate */
+        function rotate(index = 0) {
+            const {
+                canvas,
+                page
+            } = pages[index];
+            const elements = canvas[0];
+            const ctx = elements.getContext("2d");
+            const viewport = page.getViewport({
+                scale: initialState.zoom,
+                rotation: initialState.curentRotate,
+            });
+            const outputScale = window.devicePixelRatio || 1;
+            const renderCtx = {
+                canvasContext: ctx,
+                viewport: viewport,
+            };
+            elements.height = viewport.height;
+            elements.width = viewport.width;
+            if (ENABLED_MAX_WIDTH.includes(initialState.zoomString)) {
+                canvas.css("max-width", "100vw");
+            } else {
+                canvas.css("max-width", "unset");
+            }
+            page.render(renderCtx).promise.then(() => {
+                let nextIndex = index + 1;
+                if (nextIndex < initialState.pageCount) {
+                    rotate(nextIndex);
+                } else {
+                    miniPdfContainer.get(0).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                    rotatePreviewPage();
+                }
+            });
+        }
+
+        /** Rotate preview pages */
+        function rotatePreviewPage(index = 0) {
+            const {
+                canvas,
+                page
+            } = miniPages[index];
+            const elements = canvas[0];
+            const ctx = elements.getContext("2d");
+            const viewport = page.getViewport({
+                scale: initialState.zoom,
+                rotation: initialState.curentRotate,
+            });
+            const outputScale = window.devicePixelRatio || 1;
+            const renderCtx = {
+                canvasContext: ctx,
+                viewport: viewport,
+            };
+            elements.height = viewport.height;
+            elements.width = viewport.width;
+            page.render(renderCtx).promise.then(() => {
+                let nextIndex = index + 1;
+                if (nextIndex < initialState.pageCount) {
+                    rotatePreviewPage(nextIndex);
+                } else {
+                    loading.css("display", "none");
                 }
             });
         }
@@ -977,6 +898,10 @@
                         });
                     };
                     miniPdfContainer.append(wrapper);
+                    miniPages.push({
+                        canvas,
+                        page
+                    });
                     page.render(renderCtx).promise.then((data) => {
                         let nextPage = i + 1;
                         if (nextPage <= initialState.pageCount) {

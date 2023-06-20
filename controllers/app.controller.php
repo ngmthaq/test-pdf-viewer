@@ -55,7 +55,7 @@ class AppController
      */
     protected function isGetPdf()
     {
-        return array_key_exists("pdf", $this->get);
+        return array_key_exists("rqt", $this->get) && $this->get["rqt"] === "pdf";
     }
 
     /**

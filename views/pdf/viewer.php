@@ -128,7 +128,7 @@
                             <th>Filesize</th>
                             <td></td>
                         </tr>
-                        <tr id="document-tile">
+                        <tr id="document-title">
                             <th>Title</th>
                             <td></td>
                         </tr>
