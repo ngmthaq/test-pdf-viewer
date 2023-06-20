@@ -15,6 +15,8 @@
         const CANVAS_CLASS = "canvas-layer";
         const CANVAS_WRAPPER_CLASS = "canvas-wrapper";
         const CANVAS_MARGIN = 8;
+        const CANVAS_WRAPPER_ID_TEMPLATE = "pdf-viewer-wrapper-:id";
+        const MINI_CANVAS_WRAPPER_ID_TEMPLATE = "mini-pdf-viewer-wrapper-:id";
 
         /** CSS Unit */
         const CSS_UNIT = PDFJS.PixelsPerInch.PDF_TO_CSS_UNITS;
@@ -22,6 +24,7 @@
         /** Locale */
         const lang = window.navigator.language;
         const locales = window.navigator.languages.map((l) => l);
+        const langUrlTemplate = "./vendors/libs/pdfjs/web/locale/:lang/viewer.properties";
 
         /** Zoom Levels */
         const ZOOM_LEVELS = {
@@ -129,6 +132,7 @@
             },
             isFullscreen: false,
             isOpenSidebar: false,
+            isRenderComplete: false,
             info: {
                 name: "document.pdf",
                 size: 0,
@@ -196,7 +200,7 @@
         prevButton.click(function() {
             if (initialState.currentPage > 1) {
                 initialState.currentPage -= 1;
-                let id = CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage);
+                let id = CANVAS_WRAPPER_ID_TEMPLATE.replace(":id", initialState.currentPage);
                 currentPageInput.val(initialState.currentPage);
                 let el = document.getElementById(id);
                 if (el) {
@@ -204,7 +208,7 @@
                         top: el.offsetTop
                     });
                 }
-                let miniid = MINI_CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage);
+                let miniid = MINI_CANVAS_WRAPPER_ID_TEMPLATE.replace(":id", initialState.currentPage);
                 let miniel = document.getElementById(miniid);
                 if (miniel) {
                     miniPdfContainer[0].scrollTo({
@@ -222,7 +226,7 @@
         nextButton.click(function() {
             if (initialState.currentPage < initialState.pageCount) {
                 initialState.currentPage += 1;
-                let id = CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage);
+                let id = CANVAS_WRAPPER_ID_TEMPLATE.replace(":id", initialState.currentPage);
                 currentPageInput.val(initialState.currentPage);
                 let el = document.getElementById(id);
                 if (el) {
@@ -230,7 +234,7 @@
                         top: el.offsetTop
                     });
                 }
-                let miniid = MINI_CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage);
+                let miniid = MINI_CANVAS_WRAPPER_ID_TEMPLATE.replace(":id", initialState.currentPage);
                 let miniel = document.getElementById(miniid);
                 if (miniel) {
                     miniPdfContainer[0].scrollTo({
@@ -262,13 +266,13 @@
                 initialState.currentPage === 1 && prevButton.addClass("disabled");
                 initialState.currentPage === initialState.pageCount &&
                     nextButton.addClass("disabled");
-                let id = CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage);
+                let id = CANVAS_WRAPPER_ID_TEMPLATE.replace(":id", initialState.currentPage);
                 let el = document.getElementById(id);
                 $(this).val(val);
                 pdfContainer[0].scrollTo({
                     top: el.offsetTop
                 });
-                let miniid = MINI_CANVAS_ID_TEMPLATE.replace(":id", initialState.currentPage);
+                let miniid = MINI_CANVAS_WRAPPER_ID_TEMPLATE.replace(":id", initialState.currentPage);
                 let miniel = document.getElementById(miniid);
                 miniPdfContainer[0].scrollTo({
                     top: miniel.offsetTop
@@ -548,12 +552,75 @@
         /** Init pdf pages */
         function initPages() {
             const lastOption = `<option style="display: none;" value="" id="${ZOOM_OPTION_PSUEDO}"></option>`;
+
             Object.values(ZOOM_LEVELS).forEach((level, index) => {
                 const id = level.id || "zoom-level-" + index;
                 const option = `<option value="${level.value}" id="${id}">${level.title}</option>`;
                 zoomDropdown.html(zoomDropdown.html() + option);
             });
+
             zoomDropdown.html(zoomDropdown.html() + lastOption);
+
+            for (let i = 1; i <= initialState.pageCount; i++) {
+                const canvasDiv = $("<div></div>");
+                const canvasWrapper = canvasDiv.get(0);
+                const mainCanvas = $("<canvas></canvas>");
+                const mainCanvasElement = mainCanvas.get(0);
+                mainCanvas.addClass(CANVAS_CLASS);
+                mainCanvasElement.height = 900;
+                mainCanvasElement.width = 625;
+                mainCanvasElement.style.backgroundColor = "#fff";
+                mainCanvasElement.style.marginTop = CANVAS_MARGIN + "px";
+                mainCanvasElement.style.marginBottom = CANVAS_MARGIN + "px";
+                mainCanvasElement.id = CANVAS_ID_TEMPLATE.replace(":id", i);
+                canvasWrapper.id = CANVAS_WRAPPER_ID_TEMPLATE.replace(":id", i);
+                canvasWrapper.classList.add(CANVAS_WRAPPER_CLASS);
+                canvasWrapper.append(mainCanvasElement);
+                canvasWrapper.addEventListener("mouseover", function() {
+                    initialState.currentPage = i;
+                    currentPageInput.val(initialState.currentPage);
+                    prevButton.removeClass("disabled");
+                    nextButton.removeClass("disabled");
+                    initialState.currentPage === 1 && prevButton.addClass("disabled");
+                    initialState.currentPage === initialState.pageCount &&
+                        nextButton.addClass("disabled");
+                    $(`.${MINI_PDF_WRAPPER_CLASS}`).removeClass("active");
+                    $(`.${MINI_PDF_WRAPPER_CLASS}[data-id="${initialState.currentPage}"]`).addClass("active");
+                });
+
+                const miniCanvasDiv = $("<div></div>");
+                const miniCanvasWrapper = miniCanvasDiv.get(0);
+                const miniCanvas = $("<canvas></canvas>");
+                const miniCanvasElement = miniCanvas.get(0);
+                miniCanvas.addClass(CANVAS_CLASS);
+                miniCanvasElement.height = 210;
+                miniCanvasElement.width = 150;
+                miniCanvasElement.style.backgroundColor = "#fff";
+                miniCanvasElement.style.marginTop = CANVAS_MARGIN + "px";
+                miniCanvasElement.style.marginBottom = CANVAS_MARGIN + "px";
+                miniCanvasElement.id = MINI_CANVAS_ID_TEMPLATE.replace(":id", i);
+                miniCanvasWrapper.append(miniCanvasElement);
+                miniCanvasWrapper.id = MINI_CANVAS_WRAPPER_ID_TEMPLATE.replace(":id", i);
+                miniCanvasWrapper.setAttribute("data-id", i);
+                miniCanvasWrapper.className = "d-flex justify-content-center align-items-center " + MINI_PDF_WRAPPER_CLASS;
+                if (i === 1) miniCanvasWrapper.className += " active";
+                miniCanvasWrapper.classList.add(CANVAS_WRAPPER_CLASS);
+                miniCanvasWrapper.setAttribute("title", langs.page_landmark.replace("{{page}}", i));
+                miniCanvasWrapper.onclick = function(e) {
+                    initialState.currentPage = i;
+                    $(`.${MINI_PDF_WRAPPER_CLASS}`).removeClass("active");
+                    $(`.${MINI_PDF_WRAPPER_CLASS}[data-id="${initialState.currentPage}"]`).addClass("active");
+                    currentPageInput.val(i);
+                    let el = document.getElementById(CANVAS_ID_TEMPLATE.replace(":id", i));
+                    pdfContainer.get(0).scrollTo({
+                        top: el.offsetTop
+                    });
+                };
+
+                pdfContainer.append(canvasWrapper);
+                miniPdfContainer.append(miniCanvasWrapper);
+            }
+
             renderCanvas();
         }
 
@@ -590,11 +657,9 @@
         function getI18n() {
             return new Promise((resolve, reject) => {
                 let locale = locales.shift();
-                let i18nUrlTemplate =
-                    "./vendors/libs/pdfjs/web/locale/:lang/viewer.properties";
                 $.ajax({
                     type: "get",
-                    url: i18nUrlTemplate.replace(":lang", locale),
+                    url: langUrlTemplate.replace(":lang", locale),
                     dataType: "html",
                     success: function(response) {
                         let output = {};
@@ -632,6 +697,7 @@
                     return xhr;
                 },
                 success: function(response) {
+                    loading.css("display", "none");
                     let path = PDF_PATH_DEFAULT;
                     if (response.size > 0) {
                         path = window.URL.createObjectURL(response);
@@ -645,6 +711,7 @@
                     });
                 },
                 error: function(xhr, status, error) {
+                    loading.css("display", "none");
                     let path = PDF_PATH_DEFAULT;
                     alert(langs.loading_error);
                     render(path, ppw);
@@ -664,7 +731,7 @@
                 canvas,
                 page
             } = pages[index];
-            const elements = canvas[0];
+            const elements = canvas;
             const ctx = elements.getContext("2d");
             const viewport = page.getViewport({
                 scale: initialState.zoom,
@@ -678,9 +745,9 @@
             elements.height = viewport.height;
             elements.width = viewport.width;
             if (ENABLED_MAX_WIDTH.includes($(_this).val())) {
-                canvas.css("max-width", "100vw");
+                elements.style.maxWidth = "100vw";
             } else {
-                canvas.css("max-width", "unset");
+                elements.style.maxWidth = "unset";
             }
             page.render(renderCtx).promise.then(() => {
                 let nextIndex = index + 1;
@@ -699,7 +766,7 @@
                 page
             } = pages[index];
 
-            const elements = canvas[0];
+            const elements = canvas;
             const ctx = elements.getContext("2d");
             const viewport = page.getViewport({
                 scale: initialState.zoom,
@@ -716,9 +783,9 @@
             elements.width = viewport.width;
 
             if (ENABLED_MAX_WIDTH.includes(initialState.zoomString)) {
-                canvas.css("max-width", "100vw");
+                elements.style.maxWidth = "100vw";
             } else {
-                canvas.css("max-width", "unset");
+                elements.style.maxWidth = "unset";
             }
 
             rotatePreviewPage(index);
@@ -740,7 +807,7 @@
                 page
             } = miniPages[index];
 
-            const elements = canvas[0];
+            const elements = canvas;
             const ctx = elements.getContext("2d");
 
             const viewport = page.getViewport({
@@ -821,10 +888,8 @@
         /** Render canvas */
         function renderCanvas(i = 1) {
             initialState.pdfDoc.getPage(i).then((page) => {
-                const div = $("<div></div>");
-                const wrapper = div[0];
-                const canvas = $("<canvas></canvas>");
-                const elements = canvas[0];
+                const wrapper = document.getElementById(CANVAS_WRAPPER_ID_TEMPLATE.replace(":id", i));
+                const elements = document.getElementById(CANVAS_ID_TEMPLATE.replace(":id", i));
                 const ctx = elements.getContext("2d");
 
                 const actualViewport = page.getViewport({
@@ -846,40 +911,22 @@
 
                 initialState.viewport = viewport;
                 initialState.actualViewport = actualViewport;
-                canvas.addClass(CANVAS_CLASS);
                 elements.height = viewport.height;
                 elements.width = viewport.width;
-                elements.style.marginTop = CANVAS_MARGIN + "px";
-                elements.style.marginBottom = CANVAS_MARGIN + "px";
-                elements.id = CANVAS_ID_TEMPLATE.replace(":id", i);
-                wrapper.classList.add(CANVAS_WRAPPER_CLASS);
-                wrapper.append(elements);
-
-                wrapper.addEventListener("mouseover", function() {
-                    initialState.currentPage = i;
-                    currentPageInput.val(initialState.currentPage);
-                    prevButton.removeClass("disabled");
-                    nextButton.removeClass("disabled");
-                    initialState.currentPage === 1 && prevButton.addClass("disabled");
-                    initialState.currentPage === initialState.pageCount &&
-                        nextButton.addClass("disabled");
-                    $(`.${MINI_PDF_WRAPPER_CLASS}`).removeClass("active");
-                    $(`.${MINI_PDF_WRAPPER_CLASS}[data-id="${initialState.currentPage}"]`).addClass("active");
-                });
+                elements.style.backgroundColor = "transparent";
 
                 pages.push({
-                    canvas,
-                    page
+                    canvas: elements,
+                    page: page
                 });
 
-                pdfContainer.append(wrapper);
                 renderMiniCanvas(i);
                 page.render(renderCtx).promise.then(() => {
                     let nextPage = i + 1;
                     if (nextPage <= initialState.pageCount) {
                         renderCanvas(nextPage);
                     } else {
-                        loading.css("display", "none");
+                        initialState.isRenderComplete = true;
                     }
                 });
             });
@@ -889,10 +936,8 @@
         function renderMiniCanvas(i = 1) {
             return new Promise((resolve, reject) => {
                 initialState.pdfDoc.getPage(i).then((page) => {
-                    const div = $("<div></div>");
-                    const wrapper = div[0];
-                    const canvas = $("<canvas></canvas>");
-                    const elements = canvas[0];
+                    const wrapper = document.getElementById(MINI_CANVAS_WRAPPER_ID_TEMPLATE.replace(":id", i));
+                    const elements = document.getElementById(MINI_CANVAS_ID_TEMPLATE.replace(":id", i));
                     const ctx = elements.getContext("2d");
 
                     const viewport = page.getViewport({
@@ -907,39 +952,12 @@
                         viewport: viewport,
                     };
 
-                    canvas.addClass(CANVAS_CLASS);
                     elements.height = viewport.height;
                     elements.width = viewport.width;
-                    elements.style.marginTop = CANVAS_MARGIN + "px";
-                    elements.style.marginBottom = CANVAS_MARGIN + "px";
-                    elements.id = MINI_CANVAS_ID_TEMPLATE.replace(":id", i);
-                    wrapper.setAttribute("data-id", i);
-                    wrapper.className = "d-flex justify-content-center align-items-center " + MINI_PDF_WRAPPER_CLASS;
-
-                    if (i === 1) {
-                        wrapper.className += " active";
-                    }
-
-                    wrapper.classList.add(CANVAS_WRAPPER_CLASS);
-                    wrapper.setAttribute("title", langs.page_landmark.replace("{{page}}", i));
-                    wrapper.append(elements);
-
-                    wrapper.onclick = function(e) {
-                        initialState.currentPage = i;
-                        $(`.${MINI_PDF_WRAPPER_CLASS}`).removeClass("active");
-                        $(`.${MINI_PDF_WRAPPER_CLASS}[data-id="${initialState.currentPage}"]`).addClass("active");
-                        currentPageInput.val(i);
-                        let el = document.getElementById(CANVAS_ID_TEMPLATE.replace(":id", i));
-                        pdfContainer[0].scrollTo({
-                            top: el.offsetTop
-                        });
-                    };
-
-                    miniPdfContainer.append(wrapper);
 
                     miniPages.push({
-                        canvas,
-                        page
+                        canvas: elements,
+                        page: page
                     });
 
                     page.render(renderCtx);

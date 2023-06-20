@@ -18,7 +18,7 @@
 
         /* z-index */
         --z-index-loading: 1;
-        --z-index-overlay: 1000;
+        --z-index-overlay: 10000;
     }
 
     * {
