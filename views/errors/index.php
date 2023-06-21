@@ -7,9 +7,12 @@
     <link rel="shortcut icon" href="<?php assets('img/favicon.ico') ?>" type="image/x-icon">
     <title></title>
     <style>
+        @import url("/vendors/fonts/noto_san_jp/NotoSansJP-VariableFont_wght.ttf");
+
         * {
             padding: 0;
             margin: 0;
+            font-family: 'Noto Sans JP', sans-serif;
         }
 
         .error-container {
