@@ -13,6 +13,7 @@
         const MINI_PDF_WRAPPER_CLASS = "mini-pdf-wrapper";
         const CONTAINER_ID_TEMPLATE = "pdf-container-:id";
         const CANVAS_CLASS = "canvas-layer";
+        const MINI_CANVAS_CLASS = "mini-canvas-layer";
         const CANVAS_WRAPPER_CLASS = "canvas-wrapper";
         const CANVAS_MARGIN = 8;
         const CANVAS_WRAPPER_ID_TEMPLATE = "pdf-viewer-wrapper-:id";
@@ -481,6 +482,13 @@
             overlay.css("display", "flex");
         });
 
+        /** PDF Container scroll */
+        pdfContainer.on("scroll", debounce(function(e) {
+            $(`.${CANVAS_CLASS}:not(.${MINI_CANVAS_CLASS})`).each((index, elm) => {
+                let visible = isVisible($("#" + elm.id));
+            });
+        }));
+
         /** Initial pdf.js */
         function render(path, ppw = "") {
             const LOADING_TASK = PDFJS.getDocument(path);
@@ -593,6 +601,7 @@
                 const miniCanvas = $("<canvas></canvas>");
                 const miniCanvasElement = miniCanvas.get(0);
                 miniCanvas.addClass(CANVAS_CLASS);
+                miniCanvas.addClass(MINI_CANVAS_CLASS);
                 miniCanvasElement.height = 210;
                 miniCanvasElement.width = 150;
                 miniCanvasElement.style.backgroundColor = "#fff";
@@ -963,6 +972,33 @@
                     page.render(renderCtx);
                 });
             });
+        }
+
+        /** Check element visible in window */
+        function isVisible(jqueryElement, evalType) {
+            evalType = evalType || "visible";
+
+            let vpH = $(window).height();
+            let st = $(window).scrollTop();
+            let y = jqueryElement.offset().top;
+            let elementHeight = jqueryElement.height();
+
+            if (evalType === "visible") return y < (vpH + st) && y > (st - elementHeight);
+            if (evalType === "above") return y < (vpH + st);
+            return false;
+        }
+
+        /** Debounce */
+        function debounce(fn, ms = 250) {
+            let timer;
+            return function() {
+                const args = arguments;
+                const context = this;
+                if (timer) clearTimeout(timer);
+                timer = setTimeout(() => {
+                    fn.apply(context, args);
+                }, ms)
+            }
         }
 
         /** Main flow */
