@@ -357,7 +357,7 @@
         bottom: 0;
         background-color: rgba(0, 0, 0, 0.8);
         z-index: var(--z-index-overlay);
-        display: none;
+        display: none !important;
     }
 
     @media print {
