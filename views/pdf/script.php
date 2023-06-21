@@ -119,7 +119,7 @@
             scaleControl: 1,
             scaleStep: 0.25,
             minScale: 0.25,
-            maxScale: 5,
+            maxScale: 4,
             viewMode: VIEW_MODES.vertical.value,
             curentRotate: 0,
             rotate: 90,
@@ -286,20 +286,32 @@
         /** Dropdown changed */
         zoomDropdown.change(function() {
             let _this = this;
-            loading.css("display", "flex");
             initialState.zoom = convertZoomNumber($(this).val());
             initialState.zoomString = $(this).val();
             zoomInButton.removeClass("disabled");
             zoomOutButton.removeClass("disabled");
             initialState.scaleControl = 1;
-            resize(_this);
+            let resizedPages = [];
+            $(`.${CANVAS_CLASS}:not(.${MINI_CANVAS_CLASS})`).each((index, elm) => {
+                let renderedPages = pages.map(p => p.index);
+                let page = parseInt(elm.getAttribute("data-id"));
+                let pageIndex = pages.findIndex((p) => p.index === page);
+                let visible = isVisible("#" + elm.id);
+                if (visible) {
+                    if (renderedPages.includes(page) && !resizedPages.includes(page)) {
+                        resize(pageIndex);
+                        resizedPages.push(page);
+                    } else {
+                        drawCanvas(page);
+                    }
+                }
+            });
         });
 
         /** Click zoom out */
         zoomOutButton.click(function() {
             if (initialState.scaleControl > initialState.minScale) {
                 let _this = this;
-                loading.css("display", "flex");
                 zoomInButton.removeClass("disabled");
                 initialState.scaleControl -= initialState.scaleStep;
                 initialState.zoom = initialState.scaleControl;
@@ -308,7 +320,21 @@
                 $("#" + ZOOM_OPTION_PSUEDO).text(initialState.scaleControl * 100 + "%");
                 zoomDropdown.val(initialState.scaleControl);
                 initialState.scaleControl === initialState.minScale && $(this).addClass("disabled");
-                resize(_this);
+                let resizedPages = [];
+                $(`.${CANVAS_CLASS}:not(.${MINI_CANVAS_CLASS})`).each((index, elm) => {
+                    let renderedPages = pages.map(p => p.index);
+                    let page = parseInt(elm.getAttribute("data-id"));
+                    let pageIndex = pages.findIndex((p) => p.index === page);
+                    let visible = isVisible("#" + elm.id);
+                    if (visible) {
+                        if (renderedPages.includes(page) && !resizedPages.includes(page)) {
+                            resize(pageIndex);
+                            resizedPages.push(page);
+                        } else {
+                            drawCanvas(page);
+                        }
+                    }
+                });
             }
         });
 
@@ -316,7 +342,6 @@
         zoomInButton.click(function() {
             if (initialState.scaleControl < initialState.maxScale) {
                 let _this = this;
-                loading.css("display", "flex");
                 zoomOutButton.removeClass("disabled");
                 initialState.scaleControl += initialState.scaleStep;
                 initialState.zoom = initialState.scaleControl;
@@ -325,7 +350,21 @@
                 $("#" + ZOOM_OPTION_PSUEDO).text(initialState.scaleControl * 100 + "%");
                 zoomDropdown.val(initialState.scaleControl);
                 initialState.scaleControl === initialState.maxScale && $(this).addClass("disabled");
-                resize(_this);
+                let resizedPages = [];
+                $(`.${CANVAS_CLASS}:not(.${MINI_CANVAS_CLASS})`).each((index, elm) => {
+                    let renderedPages = pages.map(p => p.index);
+                    let page = parseInt(elm.getAttribute("data-id"));
+                    let pageIndex = pages.findIndex((p) => p.index === page);
+                    let visible = isVisible("#" + elm.id);
+                    if (visible) {
+                        if (renderedPages.includes(page) && !resizedPages.includes(page)) {
+                            resize(pageIndex);
+                            resizedPages.push(page);
+                        } else {
+                            drawCanvas(page);
+                        }
+                    }
+                });
             }
         });
 
@@ -488,7 +527,19 @@
                 let renderedPages = pages.map(p => p.index);
                 let page = parseInt(elm.getAttribute("data-id"));
                 let visible = isVisible("#" + elm.id);
-                if (visible && !renderedPages.includes(page)) drawCanvas(page);
+                if (visible) {
+                    if (renderedPages.includes(page)) {
+                        let pageConfig = pages.find(p => p.index === page);
+                        let pageConfigIndex = pages.findIndex(p => p.index === page);
+                        if (pageConfig.scale !== initialState.zoom) {
+                            resize(pageConfigIndex);
+                            pageConfig.scale = initialState.zoom;
+                        }
+                    } else {
+                        drawCanvas(page);
+                    }
+                }
+
             });
         }));
 
@@ -504,10 +555,13 @@
 
         /** Initial pdf.js */
         function render(path, ppw = "") {
+            console.info("Render pdf file");
+
             const LOADING_TASK = PDFJS.getDocument(path);
 
             if (ppw) {
                 LOADING_TASK.onPassword = function(callback, reason) {
+                    console.info("Unlock pdf password");
                     callback(d(ppw, restrictions.key));
                 }
             }
@@ -517,6 +571,7 @@
                     initialState.pdfDoc = doc;
                     initialState.pageCount = initialState.pdfDoc.numPages;
                     doc.getMetadata().then((metadata) => {
+                        console.info("Get pdf file infomation");
                         initialState.info.size = metadata.contentLength;
                         initialState.info.pages = initialState.pdfDoc.numPages;
                         initialState.info.author = metadata.info.Creator || "";
@@ -587,7 +642,6 @@
                     let page = parseInt(elm.getAttribute("data-id"));
                     let visible = isVisible("#" + elm.id);
                     if (visible) drawCanvas(page);
-                    loading.css("display", "none");
                 });
 
                 $(`.${MINI_CANVAS_CLASS}`).each((index, elm) => {
@@ -595,6 +649,8 @@
                     let visible = isVisible("#" + elm.id);
                     if (visible) drawMiniCanvas(page);
                 });
+
+                loading.css("display", "none");
             })
         }
 
@@ -664,6 +720,7 @@
                     page = i;
                 }
 
+                console.info("Render pdf frame");
                 resolve(page);
             })
         }
@@ -700,12 +757,14 @@
         /** Get i18n */
         function getI18n() {
             return new Promise((resolve, reject) => {
+                console.info("Getting i18n data");
                 let locale = locales.shift();
                 $.ajax({
                     type: "get",
                     url: langUrlTemplate.replace(":lang", locale),
                     dataType: "html",
                     success: function(response) {
+                        console.info(`Get i18n successfully (${locale})`);
                         let output = {};
                         let array = response.split("\n");
                         let filterArray = array.filter(
@@ -719,7 +778,10 @@
                     },
                     error: function(xhr, status, error) {
                         if (xhr.status === 404) {
+                            console.info("Get i18n data failure, try to get another locale data");
                             resolve(getI18n());
+                        } else {
+                            console.info("Failure to get i18n data");
                         }
                     },
                 });
@@ -728,6 +790,7 @@
 
         /** Request get PDF */
         function requestPDF(path, ppw = "") {
+            console.info("Getting pdf file");;
             loading.css("display", "flex");
             $.ajax({
                 type: "get",
@@ -741,6 +804,7 @@
                     return xhr;
                 },
                 success: function(response) {
+                    console.info("Get pdf file successfully");
                     let path = PDF_PATH_DEFAULT;
                     if (response.size > 0) {
                         path = window.URL.createObjectURL(response);
@@ -754,6 +818,7 @@
                     });
                 },
                 error: function(xhr, status, error) {
+                    console.info("Get pdf file failure");
                     let path = PDF_PATH_DEFAULT;
                     alert(langs.loading_error);
                     render(path, ppw);
@@ -769,7 +834,7 @@
         }
 
         /** Resize */
-        function resize(_this, index = 0) {
+        function resize(index) {
             const {
                 canvas,
                 page
@@ -787,19 +852,13 @@
             };
             elements.height = viewport.height;
             elements.width = viewport.width;
-            if (ENABLED_MAX_WIDTH.includes($(_this).val())) {
+            if (ENABLED_MAX_WIDTH.includes(initialState.zoomString)) {
                 elements.style.maxWidth = "100vw";
             } else {
                 elements.style.maxWidth = "unset";
             }
-            page.render(renderCtx).promise.then(() => {
-                let nextIndex = index + 1;
-                if (nextIndex < initialState.pageCount) {
-                    resize(_this, nextIndex);
-                } else {
-                    loading.css("display", "none");
-                }
-            });
+            console.info("Resize page");
+            page.render(renderCtx);
         }
 
         /** Rotate */
@@ -832,7 +891,7 @@
             }
 
             rotatePreviewPage(index);
-
+            console.info("Rotate page");
             page.render(renderCtx).promise.then(() => {
                 let nextIndex = index + 1;
                 if (nextIndex < initialState.pageCount) {
@@ -867,7 +926,7 @@
 
             elements.height = viewport.height;
             elements.width = viewport.width;
-
+            console.info("Rotate preview page");
             page.render(renderCtx);
         }
 
@@ -931,6 +990,7 @@
         /** Render canvas */
         function drawCanvas(i = 1) {
             initialState.pdfDoc.getPage(i).then((page) => {
+                console.info("Draw pdf page " + i);
                 const wrapper = document.getElementById(CANVAS_WRAPPER_ID_TEMPLATE.replace(":id", i));
                 const elements = document.getElementById(CANVAS_ID_TEMPLATE.replace(":id", i));
                 const ctx = elements.getContext("2d");
@@ -961,7 +1021,9 @@
                 pages.push({
                     index: i,
                     canvas: elements,
-                    page: page
+                    page: page,
+                    scale: initialState.zoom,
+                    rotation: initialState.curentRotate
                 });
 
                 page.render(renderCtx);
@@ -972,6 +1034,7 @@
         function drawMiniCanvas(i = 1) {
             return new Promise((resolve, reject) => {
                 initialState.pdfDoc.getPage(i).then((page) => {
+                    console.info("Draw pdf page preview " + i);
                     const wrapper = document.getElementById(MINI_CANVAS_WRAPPER_ID_TEMPLATE.replace(":id", i));
                     const elements = document.getElementById(MINI_CANVAS_ID_TEMPLATE.replace(":id", i));
                     const ctx = elements.getContext("2d");
@@ -1003,21 +1066,18 @@
         }
 
         /** Check element visible in window */
-        function isVisible(selector, evalType) {
-            evalType = evalType || "visible";
-
+        function isVisible(selector) {
             let containerHeight = window.outerHeight;
             let containerScrollTop = $(window).scrollTop();
             let elementHeight = $(selector).innerHeight();
             let elementOffsetTop = $(selector).offset().top;
 
-            if (evalType === "visible") return elementOffsetTop < (containerHeight + containerScrollTop) && elementOffsetTop > (containerScrollTop - elementHeight);
-            if (evalType === "above") return elementOffsetTop < (containerHeight + containerScrollTop);
-            return false;
+            return elementOffsetTop - (containerHeight + containerScrollTop) < 0 + (elementHeight * 2) &&
+                elementOffsetTop - (containerScrollTop - elementHeight) > 0 - (elementHeight * 2);
         }
 
         /** Debounce */
-        function debounce(fn, ms = 50) {
+        function debounce(fn, ms = 25) {
             let timer;
             return function() {
                 const args = arguments;
@@ -1031,6 +1091,7 @@
 
         /** Main flow */
         function main() {
+            console.info("Init application");
             if (restrictions) {
                 getI18n().then(languages => {
                     langs = languages;
