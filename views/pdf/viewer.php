@@ -175,7 +175,6 @@
 
     <script src="<?php assets('libs/jquery/index.min.js') ?>"></script>
     <script src="<?php assets('libs/jquery/numeric.plugin.min.js') ?>"></script>
-    <script src="<?php assets('libs/jquery/print.plugin.js') ?>"></script>
     <script src="<?php assets('libs/bootstrap/js/bootstrap.min.js') ?>"></script>
     <script src="<?php assets('libs/pdfjs/build/pdf.js') ?>"></script>
     <script src="<?php assets('libs/crypto/crypto-js.js') ?>"></script>
