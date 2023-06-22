@@ -27,6 +27,9 @@
         const locales = window.navigator.languages.map((l) => l);
         const langUrlTemplate = "./vendors/libs/pdfjs/web/locale/:lang/viewer.properties";
 
+        /** Events */
+        const printEvent = "ready-for-print";
+
         /** Zoom Levels */
         const ZOOM_LEVELS = {
             auto: {
@@ -161,6 +164,7 @@
         const zoomInButton = $(document).find("#zoom-in");
         const zoomDropdown = $(document).find("#zoom-select-options");
         const pdfContainer = $(document).find("#pdf-container");
+        const printContainer = $(document).find("#print-pdf-container");
         const miniPdfContainer = $(document).find("#mini-pdf-container");
         const openFullScreenBtn = $(document).find("#open-fullscreen-btn");
         const printButton = $(document).find("#print-btn");
@@ -291,16 +295,14 @@
             zoomInButton.removeClass("disabled");
             zoomOutButton.removeClass("disabled");
             initialState.scaleControl = 1;
-            let resizedPages = [];
             $(`.${CANVAS_CLASS}:not(.${MINI_CANVAS_CLASS})`).each((index, elm) => {
                 let renderedPages = pages.map(p => p.index);
                 let page = parseInt(elm.getAttribute("data-id"));
                 let pageIndex = pages.findIndex((p) => p.index === page);
                 let visible = isVisible("#" + elm.id);
                 if (visible) {
-                    if (renderedPages.includes(page) && !resizedPages.includes(page)) {
+                    if (renderedPages.includes(page)) {
                         resize(pageIndex);
-                        resizedPages.push(page);
                     } else {
                         drawCanvas(page);
                     }
@@ -320,16 +322,14 @@
                 $("#" + ZOOM_OPTION_PSUEDO).text(initialState.scaleControl * 100 + "%");
                 zoomDropdown.val(initialState.scaleControl);
                 initialState.scaleControl === initialState.minScale && $(this).addClass("disabled");
-                let resizedPages = [];
                 $(`.${CANVAS_CLASS}:not(.${MINI_CANVAS_CLASS})`).each((index, elm) => {
                     let renderedPages = pages.map(p => p.index);
                     let page = parseInt(elm.getAttribute("data-id"));
                     let pageIndex = pages.findIndex((p) => p.index === page);
                     let visible = isVisible("#" + elm.id);
                     if (visible) {
-                        if (renderedPages.includes(page) && !resizedPages.includes(page)) {
+                        if (renderedPages.includes(page)) {
                             resize(pageIndex);
-                            resizedPages.push(page);
                         } else {
                             drawCanvas(page);
                         }
@@ -350,16 +350,14 @@
                 $("#" + ZOOM_OPTION_PSUEDO).text(initialState.scaleControl * 100 + "%");
                 zoomDropdown.val(initialState.scaleControl);
                 initialState.scaleControl === initialState.maxScale && $(this).addClass("disabled");
-                let resizedPages = [];
                 $(`.${CANVAS_CLASS}:not(.${MINI_CANVAS_CLASS})`).each((index, elm) => {
                     let renderedPages = pages.map(p => p.index);
                     let page = parseInt(elm.getAttribute("data-id"));
                     let pageIndex = pages.findIndex((p) => p.index === page);
                     let visible = isVisible("#" + elm.id);
                     if (visible) {
-                        if (renderedPages.includes(page) && !resizedPages.includes(page)) {
+                        if (renderedPages.includes(page)) {
                             resize(pageIndex);
-                            resizedPages.push(page);
                         } else {
                             drawCanvas(page);
                         }
@@ -405,6 +403,7 @@
 
         /** Print configs */
         const printConfigs = {
+            debug: true,
             beforePrintEvent: () => {
                 loading.css("display", "none");
             },
@@ -416,12 +415,14 @@
 
         /** Click print */
         printButton.click(function() {
-            pdfContainer.printThis(printConfigs);
+            let event = new Event(printEvent);
+            window.dispatchEvent(event);
         });
 
         /** Click print */
         toolPrint.click(function() {
-            pdfContainer.printThis(printConfigs);
+            let event = new Event(printEvent);
+            window.dispatchEvent(event);
         });
 
         /** Ctrl + P */
@@ -429,7 +430,8 @@
             if ((event.ctrlKey || event.metaKey) && event.keyCode === 80) {
                 event.preventDefault();
                 event.stopImmediatePropagation();
-                pdfContainer.printThis(printConfigs);
+                let e = new Event(printEvent);
+                window.dispatchEvent(e);
             }
         });
 
@@ -478,22 +480,70 @@
 
         /** Rotate right */
         toolRotateRight.click(function() {
-            loading.css("display", "flex");
             initialState.curentRotate += initialState.rotate;
-            miniPdfContainer.get(0).scroll({
-                top: 0
+            $(`.${MINI_CANVAS_CLASS}`).each((index, elm) => {
+                let renderedPages = miniPages.map(p => p.index);
+                let page = parseInt(elm.getAttribute("data-id"));
+                let visible = isVisible("#" + elm.id);
+                if (visible) {
+                    if (renderedPages.includes(page)) {
+                        let pageConfig = miniPages.find(p => p.index === page);
+                        let pageConfigIndex = miniPages.findIndex(p => p.index === page);
+                        if (pageConfig.rotation !== initialState.curentRotate) {
+                            rotatePreviewPage(pageConfigIndex);
+                        }
+                    } else {
+                        drawMiniCanvas(page);
+                    }
+                }
             });
-            rotate();
+            $(`.${CANVAS_CLASS}:not(.${MINI_CANVAS_CLASS})`).each((index, elm) => {
+                let renderedPages = pages.map(p => p.index);
+                let page = parseInt(elm.getAttribute("data-id"));
+                let pageIndex = pages.findIndex((p) => p.index === page);
+                let visible = isVisible("#" + elm.id);
+                if (visible) {
+                    if (renderedPages.includes(page)) {
+                        rotate(pageIndex);
+                    } else {
+                        drawCanvas(page);
+                    }
+                }
+            });
         });
 
         /** Rotate left */
         toolRotateLeft.click(function() {
-            loading.css("display", "flex");
             initialState.curentRotate -= initialState.rotate;
-            miniPdfContainer.get(0).scroll({
-                top: 0
+            $(`.${MINI_CANVAS_CLASS}`).each((index, elm) => {
+                let renderedPages = miniPages.map(p => p.index);
+                let page = parseInt(elm.getAttribute("data-id"));
+                let visible = isVisible("#" + elm.id);
+                if (visible) {
+                    if (renderedPages.includes(page)) {
+                        let pageConfig = miniPages.find(p => p.index === page);
+                        let pageConfigIndex = miniPages.findIndex(p => p.index === page);
+                        if (pageConfig.rotation !== initialState.curentRotate) {
+                            rotatePreviewPage(pageConfigIndex);
+                        }
+                    } else {
+                        drawMiniCanvas(page);
+                    }
+                }
             });
-            rotate();
+            $(`.${CANVAS_CLASS}:not(.${MINI_CANVAS_CLASS})`).each((index, elm) => {
+                let renderedPages = pages.map(p => p.index);
+                let page = parseInt(elm.getAttribute("data-id"));
+                let pageIndex = pages.findIndex((p) => p.index === page);
+                let visible = isVisible("#" + elm.id);
+                if (visible) {
+                    if (renderedPages.includes(page)) {
+                        rotate(pageIndex);
+                    } else {
+                        drawCanvas(page);
+                    }
+                }
+            });
         });
 
         /** Open document info modal */
@@ -533,13 +583,13 @@
                         let pageConfigIndex = pages.findIndex(p => p.index === page);
                         if (pageConfig.scale !== initialState.zoom) {
                             resize(pageConfigIndex);
-                            pageConfig.scale = initialState.zoom;
+                        } else if (pageConfig.rotation !== initialState.curentRotate) {
+                            rotate(pageConfigIndex);
                         }
                     } else {
                         drawCanvas(page);
                     }
                 }
-
             });
         }));
 
@@ -549,7 +599,17 @@
                 let renderedPages = miniPages.map(p => p.index);
                 let page = parseInt(elm.getAttribute("data-id"));
                 let visible = isVisible("#" + elm.id);
-                if (visible && !renderedPages.includes(page)) drawMiniCanvas(page);
+                if (visible) {
+                    if (renderedPages.includes(page)) {
+                        let pageConfig = miniPages.find(p => p.index === page);
+                        let pageConfigIndex = miniPages.findIndex(p => p.index === page);
+                        if (pageConfig.rotation !== initialState.curentRotate) {
+                            rotatePreviewPage(pageConfigIndex);
+                        }
+                    } else {
+                        drawMiniCanvas(page);
+                    }
+                }
             });
         }));
 
@@ -816,6 +876,18 @@
                     toolDownload.click(function() {
                         downloadFile(path);
                     });
+                    window.addEventListener(printEvent, function() {
+                        let iframe = document.createElement("iframe");
+                        document.body.appendChild(iframe);
+                        iframe.style.display = "none";
+                        iframe.src = path;
+                        iframe.onload = function() {
+                            setTimeout(function() {
+                                iframe.focus();
+                                iframe.contentWindow.print();
+                            }, 1);
+                        };
+                    });
                 },
                 error: function(xhr, status, error) {
                     console.info("Get pdf file failure");
@@ -837,97 +909,100 @@
         function resize(index) {
             const {
                 canvas,
-                page
+                page,
+                scale
             } = pages[index];
-            const elements = canvas;
-            const ctx = elements.getContext("2d");
-            const viewport = page.getViewport({
-                scale: initialState.zoom,
-                rotation: initialState.curentRotate,
-            });
-            const outputScale = window.devicePixelRatio || 1;
-            const renderCtx = {
-                canvasContext: ctx,
-                viewport: viewport,
-            };
-            elements.height = viewport.height;
-            elements.width = viewport.width;
-            if (ENABLED_MAX_WIDTH.includes(initialState.zoomString)) {
-                elements.style.maxWidth = "100vw";
-            } else {
-                elements.style.maxWidth = "unset";
+            if (scale !== initialState.zoom) {
+                const elements = canvas;
+                const ctx = elements.getContext("2d");
+                const viewport = page.getViewport({
+                    scale: initialState.zoom,
+                    rotation: initialState.curentRotate,
+                });
+                const renderCtx = {
+                    canvasContext: ctx,
+                    viewport: viewport,
+                };
+                elements.height = viewport.height;
+                elements.width = viewport.width;
+                if (ENABLED_MAX_WIDTH.includes(initialState.zoomString)) {
+                    elements.style.maxWidth = "100vw";
+                } else {
+                    elements.style.maxWidth = "unset";
+                }
+                console.info("Resize page " + canvas.id);
+                page.render(renderCtx);
+                pages[index]["scale"] = initialState.zoom;
             }
-            console.info("Resize page");
-            page.render(renderCtx);
         }
 
         /** Rotate */
         function rotate(index = 0) {
             const {
                 canvas,
-                page
+                page,
+                scale,
+                rotation
             } = pages[index];
 
-            const elements = canvas;
-            const ctx = elements.getContext("2d");
-            const viewport = page.getViewport({
-                scale: initialState.zoom,
-                rotation: initialState.curentRotate,
-            });
+            if (rotation !== initialState.curentRotate) {
+                const elements = canvas;
+                const ctx = elements.getContext("2d");
+                const viewport = page.getViewport({
+                    scale: initialState.zoom,
+                    rotation: initialState.curentRotate,
+                });
 
-            const outputScale = window.devicePixelRatio || 1;
-            const renderCtx = {
-                canvasContext: ctx,
-                viewport: viewport,
-            };
+                const renderCtx = {
+                    canvasContext: ctx,
+                    viewport: viewport,
+                };
 
-            elements.height = viewport.height;
-            elements.width = viewport.width;
+                elements.height = viewport.height;
+                elements.width = viewport.width;
 
-            if (ENABLED_MAX_WIDTH.includes(initialState.zoomString)) {
-                elements.style.maxWidth = "100vw";
-            } else {
-                elements.style.maxWidth = "unset";
-            }
-
-            rotatePreviewPage(index);
-            console.info("Rotate page");
-            page.render(renderCtx).promise.then(() => {
-                let nextIndex = index + 1;
-                if (nextIndex < initialState.pageCount) {
-                    rotate(nextIndex);
+                if (ENABLED_MAX_WIDTH.includes(initialState.zoomString)) {
+                    elements.style.maxWidth = "100vw";
                 } else {
-                    loading.css("display", "none");
+                    elements.style.maxWidth = "unset";
                 }
-            });
+
+                console.info("Rotate page " + canvas.id);
+                page.render(renderCtx);
+                pages[index]["rotation"] = initialState.curentRotate;
+            }
         }
 
         /** Rotate preview pages */
         function rotatePreviewPage(index = 0) {
             const {
                 canvas,
-                page
+                page,
+                scale,
+                rotation
             } = miniPages[index];
 
-            const elements = canvas;
-            const ctx = elements.getContext("2d");
+            if (rotation !== initialState.curentRotate) {
+                const elements = canvas;
+                const ctx = elements.getContext("2d");
 
-            const viewport = page.getViewport({
-                scale: initialState.zoom,
-                rotation: initialState.curentRotate,
-            });
+                const viewport = page.getViewport({
+                    scale: initialState.zoom,
+                    rotation: initialState.curentRotate,
+                });
 
-            const outputScale = window.devicePixelRatio || 1;
 
-            const renderCtx = {
-                canvasContext: ctx,
-                viewport: viewport,
-            };
+                const renderCtx = {
+                    canvasContext: ctx,
+                    viewport: viewport,
+                };
 
-            elements.height = viewport.height;
-            elements.width = viewport.width;
-            console.info("Rotate preview page");
-            page.render(renderCtx);
+                elements.height = viewport.height;
+                elements.width = viewport.width;
+                console.info("Rotate", canvas.id);
+                page.render(renderCtx);
+                miniPages[index]["rotation"] = initialState.curentRotate;
+            }
         }
 
         /** Download file */
@@ -1005,8 +1080,6 @@
                     rotation: initialState.curentRotate,
                 });
 
-                const outputScale = window.devicePixelRatio || 1;
-
                 const renderCtx = {
                     canvasContext: ctx,
                     viewport: viewport,
@@ -1031,7 +1104,7 @@
         }
 
         /** Render mini canvas */
-        function drawMiniCanvas(i = 1) {
+        function drawMiniCanvas(i) {
             return new Promise((resolve, reject) => {
                 initialState.pdfDoc.getPage(i).then((page) => {
                     console.info("Draw pdf page preview " + i);
@@ -1044,7 +1117,6 @@
                         rotation: initialState.curentRotate,
                     });
 
-                    const outputScale = window.devicePixelRatio || 1;
 
                     const renderCtx = {
                         canvasContext: ctx,
@@ -1055,9 +1127,11 @@
                     elements.width = viewport.width;
 
                     miniPages.push({
+                        index: i,
                         canvas: elements,
                         page: page,
-                        index: i
+                        scale: initialState.zoom,
+                        rotation: initialState.curentRotate
                     });
 
                     page.render(renderCtx);
@@ -1072,8 +1146,8 @@
             let elementHeight = $(selector).innerHeight();
             let elementOffsetTop = $(selector).offset().top;
 
-            return elementOffsetTop - (containerHeight + containerScrollTop) < 0 + (elementHeight * 2) &&
-                elementOffsetTop - (containerScrollTop - elementHeight) > 0 - (elementHeight * 2);
+            return elementOffsetTop - (containerHeight + containerScrollTop) < 0 + (elementHeight * 3) &&
+                elementOffsetTop - (containerScrollTop - elementHeight) > 0 - (elementHeight * 3);
         }
 
         /** Debounce */

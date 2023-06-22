@@ -359,12 +359,4 @@
         z-index: var(--z-index-overlay);
         display: none !important;
     }
-
-    @media print {
-        .canvas-wrapper {
-            display: block;
-            visibility: visible;
-            position: relative;
-        }
-    }
 </style>
