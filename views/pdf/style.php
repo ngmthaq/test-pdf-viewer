@@ -178,6 +178,9 @@
         transition: all .25s ease-in-out;
         overflow-y: scroll;
         transform: translateX(0);
+        position: absolute;
+        top: 0;
+        left: 0;
     }
 
     #mini-pdf-container.close {
@@ -199,15 +202,11 @@
     }
 
     #pdf-app #pdf-container {
-        width: calc(100vw - var(--mini-pdf-container-width));
+        width: 100vw;
         height: calc(100vh - var(--controller-height));
         overflow-y: scroll;
         transition: all .25s ease-in-out;
         flex-shrink: 0;
-    }
-
-    #pdf-app #pdf-container.fullwidth {
-        width: 100vw;
     }
 
     #pdf-app #pdf-container.fullscreen::-webkit-scrollbar {
@@ -224,13 +223,15 @@
     #pdf-app #pdf-container .canvas-layer {
         max-width: 100vw;
         display: block;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .canvas-wrapper {
         width: 100%;
         display: flex;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
     }
 
     /* End PDF Container */

@@ -437,7 +437,6 @@
 
         /** Toggle open sidebar */
         sidebarButton.click(function(e) {
-            pdfContainer.toggleClass("fullwidth");
             miniPdfContainer.toggleClass("close");
             $(this).toggleClass("active");
             initialState.isOpenSidebar = !initialState.isOpenSidebar;

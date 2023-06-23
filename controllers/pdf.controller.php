@@ -38,7 +38,7 @@ class PDFController
         header("Cache-Control: public");
         header("Content-Type: application/pdf");
         header("Content-Transfer-Encoding: Binary");
-        return $this->curl("http://localhost/pdf-js-demo-2/pdf.php");
+        return $this->curl("http://localhost/pdf-js-demo-2/pdf.php"); // TODO: Change mock API to PDF API
     }
 
     /**
@@ -49,7 +49,7 @@ class PDFController
     public function getRestrictions()
     {
         header("Content-Type: application/json");
-        return $this->curl("http://localhost/pdf-js-demo-2/index.php");
+        return $this->curl("http://localhost/pdf-js-demo-2/index.php"); // TODO: Change mock API to Auth API
     }
 
     /**
@@ -191,7 +191,7 @@ class PDFController
     }
 
     /**
-     * Generate 
+     * Generate Initialization Vector
      * @return string
      */
     public function generateInitializationVector()
