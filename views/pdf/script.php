@@ -108,7 +108,7 @@
             },
         };
 
-        const restrictions = <?php echo $restrictions ?>;
+        const restrictions = <?php echo $json_restrictions ?>;
 
         let pages = [];
         let miniPages = [];
@@ -621,7 +621,7 @@
             if (ppw) {
                 LOADING_TASK.onPassword = function(callback, reason) {
                     console.info("Unlock pdf password");
-                    callback(d(ppw, restrictions.key));
+                    callback(daes(ppw, restrictions.iv));
                 }
             }
 
@@ -1168,7 +1168,12 @@
             if (restrictions) {
                 getI18n().then(languages => {
                     langs = languages;
-                    requestPDF("./", restrictions.ppw);
+                    let queryString = window.location.search;
+                    let queryParameters = Object.fromEntries(new URLSearchParams(queryString));
+                    queryParameters["rqt"] = "pdf";
+                    let newQueryString = new URLSearchParams(queryParameters).toString();
+                    newQueryString = newQueryString.length > 0 ? "?" + newQueryString : newQueryString;
+                    requestPDF("./" + newQueryString, restrictions.ppw);
                 });
             }
         }

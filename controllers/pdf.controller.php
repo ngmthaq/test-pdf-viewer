@@ -3,6 +3,111 @@
 class PDFController
 {
     /**
+     * REMOTE_ADDR_PARAM_KEY
+     */
+    const REMOTE_ADDR_PARAM_KEY = "ipa";
+
+    /**
+     * HTTP_REFERER_PARAM_KEY
+     */
+    const HTTP_REFERER_PARAM_KEY = "ref";
+
+    /**
+     * QUERY_STRING_PARAM_KEY
+     */
+    const QUERY_STRING_PARAM_KEY = "qst";
+
+    /**
+     * REL_PARAM_KEY
+     */
+    const REL_PARAM_KEY = "rel";
+
+    /**
+     * SESSION_ID_PARAM_KEY
+     */
+    const SESSION_ID_PARAM_KEY = "ssid";
+
+    /**
+     * PRIVATE_KEY_PARAM_KEY
+     */
+    const PRIVATE_KEY_PARAM_KEY = "key";
+
+    /**
+     * IV_PARAM_KEY
+     */
+    const IV_PARAM_KEY = "iv";
+
+    /**
+     * Request type param key
+     */
+    const REQUEST_TYPE_PARAM_KEY = "rqt";
+
+    /**
+     * Request type (info)
+     */
+    const REQUEST_TYPE_INFO = "info";
+
+    /**
+     * Request type (dlg)
+     */
+    const REQUEST_TYPE_DLG = "dlg";
+
+    /**
+     * Request type (log)
+     */
+    const REQUEST_TYPE_LOG = "log";
+
+    /**
+     * Request type (error)
+     */
+    const REQUEST_TYPE_ERROR = "error";
+
+    /**
+     * Request type (PDF)
+     */
+    const REQUEST_TYPE_PDF = "pdf";
+
+    /**
+     * Environment-specific base url (development)
+     */
+    const DEV_BASEURL = 'http://192.168.20.133/mol_pdf_protect/';
+
+    /**
+     * Environment-specific base url (test)
+     */
+    const TEST_BASEURL = 'http://192.168.217.44:13080/mol_pdf_protect/';
+
+    /**
+     * Environment-specific base url (production)
+     */
+    const PROD_BASEURL = 'http://192.168.217.116/mol_pdf_protect/';
+
+    /**
+     * Environment-specific base url (mock)
+     */
+    const MOCK_BASEURL = 'http://192.168.1.199/pdf-js-demo-2/';
+
+    /**
+     * PDF API Endpoint
+     */
+    const PDF_PATH = 'pdf/index.php';
+
+    /**
+     * Error Endpoint
+     */
+    const ERROR_PATH = 'err/index';
+
+    /**
+     * Log Endpoint
+     */
+    const LOG_PATH = 'cli_log/download_log';
+
+    /**
+     * DLG Endpoint
+     */
+    const DLG_PATH = 'dlg/index';
+
+    /**
      * Cipher algorithm used to encrypt the password
      */
     const CIPHER_ALGO = "aes-256-cbc";
@@ -11,6 +116,46 @@ class PDFController
      * Default restrictions
      */
     const DEFAULT_RESTRICTIONS = array("ppw" => "", "alf" => "");
+
+    /**
+     * QUERY_STRING
+     */
+    const QUERY_STRING = "QUERY_STRING";
+
+    /**
+     * REMOTE_ADDR
+     */
+    const REMOTE_ADDR = "REMOTE_ADDR";
+
+    /**
+     * HTTP_REFERER
+     */
+    const HTTP_REFERER = "HTTP_REFERER";
+
+    /**
+     * HTTP_USER_AGENT
+     */
+    const HTTP_USER_AGENT = "HTTP_USER_AGENT";
+
+    /**
+     * HTTP_HOST
+     */
+    const HTTP_HOST = "HTTP_HOST";
+
+    /**
+     * SCRIPT_NAME
+     */
+    const SCRIPT_NAME = "SCRIPT_NAME";
+
+    /**
+     * HTTPS
+     */
+    const HTTPS = "HTTPS";
+
+    /**
+     * Alf separator
+     */
+    const ALF_SEPARATOR = "|";
 
     /**
      * processed $_GET array
@@ -48,22 +193,112 @@ class PDFController
      */
     public function getRestrictions()
     {
+        $params = $this->getQueryParameters();
+        $rqt = $this->getRequestType($params);
+        $rqt = $rqt === null ? self::REQUEST_TYPE_INFO : $rqt;
+        $path = $this->getFullPath($rqt, $params);
         header("Content-Type: application/json");
-        return $this->curl("http://localhost/pdf-js-demo-2/index.php"); // TODO: Change mock API to Auth API
+        $response = $this->curl($path);
+        if ($response["code"] === 200) {
+            $response["data"] = $this->handleEncryptRestrictions($response["data"], $params[self::IV_PARAM_KEY]);
+        }
+        return $response;
     }
 
     /**
-     * Encrypt Restrictions
+     * Handle encrypt restrictions
      * 
-     * @param array $restrictions
-     * @return string $encrypted_restrictions - json string
+     * @param string $restrictions
+     * @param string $iv Initialization Vector
+     * @return string $encrypted_restrictions
      */
-    public function encryptRestrictions($restrictions)
+    public function handleEncryptRestrictions($restrictions, $iv)
     {
-        $plain_password = $restrictions["ppw"];
-        $encrypted_data = $this->rowFenceEncrypt($plain_password);
-        $encrypted_restrictions = json_encode(array("ppw" => $encrypted_data['output'], "key" => $encrypted_data['key'], "alf" => $restrictions["alf"]));
+        $restrictions = json_decode($restrictions, true);
+        $alf = strlen($restrictions["alf"]) > 0 ? explode(self::ALF_SEPARATOR, $restrictions["alf"]) : $restrictions["alf"];
+        $encrypted_restrictions = array("ppw" => $restrictions["ppw"], "iv" => $iv, "alf" => $alf);
         return $encrypted_restrictions;
+    }
+
+    /**
+     * Get query parameters
+     * 
+     * @return array
+     */
+    public function getQueryParameters()
+    {
+        $params = array();
+        $query_string = $this->getServerVariable(self::QUERY_STRING);
+        parse_str($query_string, $params);
+        $params[self::REL_PARAM_KEY] = 1;
+        $params[self::SESSION_ID_PARAM_KEY] = session_id();
+        $params[self::REMOTE_ADDR_PARAM_KEY] = $this->getServerVariable(self::REMOTE_ADDR);
+        $params[self::HTTP_REFERER_PARAM_KEY] = rawurlencode($this->getServerVariable(self::HTTP_REFERER));
+        $params[self::QUERY_STRING_PARAM_KEY] = rawurlencode($this->getServerVariable(self::QUERY_STRING));
+        $params[self::PRIVATE_KEY_PARAM_KEY] = session_id();
+        $params[self::IV_PARAM_KEY] = $this->generateInitializationVector();
+        return $params;
+    }
+
+    /**
+     * Get request type ($rqt)
+     * 
+     * @param array $params Parameters handle by getQueryParameters method
+     * @return string|null
+     */
+    public function getRequestType($params)
+    {
+        return isset($params[self::REQUEST_TYPE_PARAM_KEY]) ? $params[self::REQUEST_TYPE_PARAM_KEY] : null;
+    }
+
+    /**
+     * Get server variable
+     * 
+     * @param string $key The key of the variable to get
+     * @return string
+     */
+    public function getServerVariable($key)
+    {
+        if (is_null(filter_input(INPUT_SERVER, $key))) {
+            return isset($_SERVER[$key]) ? $_SERVER[$key] : '';
+        } else {
+            return filter_input(INPUT_SERVER, $key);
+        }
+    }
+
+    /**
+     * Get full path
+     * 
+     * @param string $rqt
+     * @param array $params
+     * @return string
+     */
+    public function getFullPath($rqt, $params)
+    {
+        $query_string = http_build_query($params);
+        $query_string = strlen($query_string) > 0 ? "?" . $query_string : "";
+        $url = (empty($_SERVER[self::HTTPS]) ? "http://" : "https://") . $_SERVER[self::HTTP_HOST] . $_SERVER[self::SCRIPT_NAME];
+
+        if (preg_match('/(mol-develop\.net|192\.168\.20\.133\/mol_pdf_protect-relay\/)/', $url)) {
+            $base_url = self::DEV_BASEURL;
+        } elseif (preg_match('/(test(ing)?|meteo-inc\.jp)/', $url)) {
+            $base_url = self::TEST_BASEURL;
+        } elseif (preg_match('/192\.168\.1\.199/', $url)) {
+            $base_url = self::MOCK_BASEURL;
+        } else {
+            $base_url = self::PROD_BASEURL;
+        }
+
+        switch ($rqt) {
+            case self::REQUEST_TYPE_DLG:
+                return $base_url . self::DLG_PATH . $query_string;
+            case self::REQUEST_TYPE_LOG:
+                return $base_url . self::LOG_PATH . $query_string;
+            case self::REQUEST_TYPE_ERROR:
+                return $base_url . self::ERROR_PATH . $query_string;
+            default:
+                return $base_url . self::PDF_PATH . $query_string;
+        }
     }
 
     /**
@@ -77,10 +312,7 @@ class PDFController
         try {
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $path);
-            curl_setopt($ch, CURLOPT_HEADER, 0);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For HTTPS
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false); // For HTTPS
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             $response = curl_exec($ch);
             $response_info = curl_getinfo($ch);
             $response_code = (int)$response_info["http_code"];

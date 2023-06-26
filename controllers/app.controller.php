@@ -39,9 +39,9 @@ class AppController
         } else {
             $response = $this->pdf->getRestrictions();
             if ($response["code"] === 200) {
-                $array_restrictions = json_decode($response["data"], true);
-                $restrictions = $this->pdf->encryptRestrictions($array_restrictions);
-                $this->renderView("pdf/viewer.php", compact("restrictions"));
+                $restrictions = $response["data"];
+                $json_restrictions = json_encode($response["data"]);
+                $this->renderView("pdf/viewer.php", compact("restrictions", "json_restrictions"));
             } else {
                 $this->renderView("errors/index.php", array(), $response["code"]);
             }
@@ -55,7 +55,8 @@ class AppController
      */
     protected function isGetPdf()
     {
-        return array_key_exists("rqt", $this->get) && $this->get["rqt"] === "pdf";
+        return array_key_exists(PDFController::REQUEST_TYPE_PARAM_KEY, $this->get)
+            && $this->get[PDFController::REQUEST_TYPE_PARAM_KEY] === PDFController::REQUEST_TYPE_PDF;
     }
 
     /**
@@ -84,7 +85,7 @@ class AppController
     {
         header('Content-Transfer-Encoding: binary');
         header('Content-type: application/pdf');
-        header('Content-Disposition: attachment; filename=molfile.pdf');
+        header('Content-Disposition: attachment; filename=document.pdf');
         header('Content-Length: ' . strlen($binary));
         http_response_code($status);
         echo $binary;
