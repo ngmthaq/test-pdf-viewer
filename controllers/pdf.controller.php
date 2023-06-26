@@ -183,7 +183,12 @@ class PDFController
         header("Cache-Control: public");
         header("Content-Type: application/pdf");
         header("Content-Transfer-Encoding: Binary");
-        return $this->curl("http://localhost/pdf-js-demo-2/pdf.php"); // TODO: Change mock API to PDF API
+        $params = $this->getQueryParameters();
+        $rqt = $this->getRequestType($params);
+        $rqt = $rqt === null ? self::REQUEST_TYPE_PDF : $rqt;
+        $path = $this->getFullPath($rqt, $params);
+        $response = $this->curl($path);
+        return $response;
     }
 
     /**

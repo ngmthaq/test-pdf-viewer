@@ -619,9 +619,17 @@
             const LOADING_TASK = PDFJS.getDocument(path);
 
             if (ppw) {
+                let retry = 1;
+                let maxRetry = 5;
                 LOADING_TASK.onPassword = function(callback, reason) {
-                    console.info("Unlock pdf password");
-                    callback(daes(ppw, restrictions.iv));
+                    if (retry <= maxRetry) {
+                        callback(daes(ppw, restrictions.iv));
+                        retry += 1;
+                    } else {
+                        alert(langs.password_invalid);
+                        console.error("Wrong password");
+                        window.close();
+                    }
                 }
             }
 
